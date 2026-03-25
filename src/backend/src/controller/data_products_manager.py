@@ -1853,10 +1853,17 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                     space_name = f"{products[0].name} - Genie Space"
 
                 logger.info(f"Creating Genie Space: {space_name}")
-                result = await genie_client.create_genie_space(
+
+                # Get warehouse ID from settings
+                from src.common.config import get_settings
+                settings = get_settings()
+                warehouse_id = settings.DATABRICKS_WAREHOUSE_ID
+
+                result = genie_client.create_genie_space(
                     ws_client=self._ws_client,
                     name=space_name,
                     datasets=datasets,
+                    warehouse_id=warehouse_id,
                     description=f"Genie Space for {len(products)} Data Product(s)",
                     instructions=instructions
                 )

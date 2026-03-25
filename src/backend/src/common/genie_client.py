@@ -1,10 +1,12 @@
 """
 Genie Spaces Client
 
-This module provides utility functions for integrating with Databricks Genie Spaces API.
-Handles space creation, dataset collection, and metadata formatting.
+Provides functions for creating Databricks Genie Spaces from Data Products.
+Uses the native Databricks SDK ``ws.genie.create_space()`` method.
 """
 
+import json
+import uuid
 from databricks.sdk import WorkspaceClient
 from typing import List, Dict, Optional, Any
 from sqlalchemy.orm import Session
@@ -14,65 +16,95 @@ from src.common.logging import get_logger
 logger = get_logger(__name__)
 
 
-async def create_genie_space(
+def _build_serialized_space(
+    datasets: List[str],
+    instructions: Optional[str] = None,
+) -> str:
+    """Build the serialized_space JSON expected by the Genie API.
+
+    Args:
+        datasets: List of catalog.schema.table identifiers
+        instructions: Optional plain-text instructions (max 5000 chars)
+
+    Returns:
+        JSON string with the Genie space configuration
+    """
+    # Tables must use 'identifier' key, sorted alphabetically
+    tables = sorted(
+        [{"identifier": ds} for ds in datasets],
+        key=lambda t: t["identifier"],
+    )
+
+    space = {
+        "version": 2,
+        "config": {},
+        "data_sources": {"tables": tables},
+    }
+
+    if instructions:
+        instruction_id = uuid.uuid4().hex
+        space["instructions"] = {
+            "text_instructions": [
+                {
+                    "id": instruction_id,
+                    "content": [instructions[:5000]],
+                }
+            ]
+        }
+
+    return json.dumps(space)
+
+
+def create_genie_space(
     ws_client: WorkspaceClient,
     name: str,
     datasets: List[str],
+    warehouse_id: str,
     description: Optional[str] = None,
-    instructions: Optional[str] = None
+    instructions: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Create a Genie Space using Databricks API.
+    Create a Genie Space using the Databricks SDK.
 
     Args:
         ws_client: Databricks workspace client
         name: Space display name
         datasets: List of catalog.schema.table identifiers
+        warehouse_id: SQL warehouse ID for the space
         description: Optional space description
-        instructions: Optional context/instructions (metadata)
+        instructions: Optional context/instructions (max 5000 chars)
 
     Returns:
         Dict with space_id, space_url, status
 
     Raises:
+        ValueError: If no datasets provided or warehouse_id missing
         Exception: On API failure
     """
+    if not datasets:
+        raise ValueError("At least one dataset is required to create a Genie Space")
+    if not warehouse_id:
+        raise ValueError("warehouse_id is required to create a Genie Space")
+
+    serialized = _build_serialized_space(datasets, instructions)
+
+    logger.info(f"Creating Genie Space '{name}' with {len(datasets)} datasets on warehouse {warehouse_id}")
+    logger.debug(f"Serialized space config: {serialized[:500]}...")
+
     try:
-        # API Reference: https://docs.databricks.com/api/workspace/genie/createspace
-        payload = {
-            "display_name": name,
-            "description": description or "",
-        }
-
-        # Add dataset references
-        if datasets:
-            # Format datasets for Genie API (format may vary based on actual API)
-            payload["tables"] = [{"full_name": ds} for ds in datasets]
-
-        # Add instructions/context (truncate to safe length)
-        if instructions:
-            payload["instructions"] = instructions[:5000]
-
-        logger.info(f"Creating Genie Space with {len(datasets)} datasets: {name}")
-        logger.debug(f"Genie Space payload: {payload}")
-
-        # Call Databricks Genie Spaces API
-        response = ws_client.api_client.do(
-            method='POST',
-            path='/api/2.0/genie/spaces',
-            body=payload,
-            headers={'Content-Type': 'application/json'}
+        response = ws_client.genie.create_space(
+            warehouse_id=warehouse_id,
+            serialized_space=serialized,
+            title=name,
+            description=description or "",
         )
 
-        # Extract space ID and URL from response
-        space_id = response.get('space_id') or response.get('id')
+        space_id = response.space_id
         if not space_id:
             raise ValueError("No space_id returned from Genie API")
 
-        workspace_url = ws_client.config.host
-        # Remove trailing slash if present
-        workspace_url = workspace_url.rstrip('/')
-        space_url = f"{workspace_url}/genie/{space_id}"
+        workspace_url = ws_client.config.host.rstrip('/')
+        space_url = f"{workspace_url}/genie/rooms/{space_id}"
 
         logger.info(f"Successfully created Genie Space: {space_id}")
         logger.info(f"Genie Space URL: {space_url}")
@@ -80,7 +112,7 @@ async def create_genie_space(
         return {
             'space_id': space_id,
             'space_url': space_url,
-            'status': 'active'
+            'status': 'active',
         }
 
     except Exception as e:
@@ -122,7 +154,6 @@ def collect_datasets_from_products(product_ids: List[str], db: Session) -> List[
 
         except Exception as e:
             logger.error(f"Error collecting datasets from product {product_id}: {e}", exc_info=True)
-            # Continue processing other products
 
     # Deduplicate while preserving order
     unique_datasets = list(dict.fromkeys(datasets))
@@ -176,7 +207,6 @@ def collect_rich_text_metadata(product_ids: List[str], db: Session) -> Dict[str,
 
         except Exception as e:
             logger.error(f"Error collecting metadata for product {product_id}: {e}", exc_info=True)
-            # Continue processing other products
 
     logger.info(f"Collected metadata for {len(metadata_map)} entities")
     return metadata_map
@@ -201,15 +231,12 @@ def format_metadata_for_genie(
     sections = []
     logger.info(f"Formatting metadata for {len(products)} products")
 
-    # Add product information
     for product in products:
         section_parts = [f"## Data Product: {product.name}\n"]
 
-        # Add product description if available
         if hasattr(product, 'description') and product.description:
             section_parts.append(f"**Description**: {product.description}\n")
 
-        # Add product domain if available
         if hasattr(product, 'domain') and product.domain:
             section_parts.append(f"**Domain**: {product.domain}\n")
 
@@ -224,7 +251,6 @@ def format_metadata_for_genie(
                     section_parts.append(f"{meta.short_description}\n\n")
 
                 if meta.content_markdown:
-                    # Limit individual content to reasonable size
                     content = meta.content_markdown
                     if len(content) > 1000:
                         content = content[:997] + "..."
@@ -232,13 +258,11 @@ def format_metadata_for_genie(
 
         sections.append("".join(section_parts))
 
-    # Combine all sections
     formatted = "\n".join(sections)
 
-    # Truncate if needed
     if len(formatted) > max_length:
         formatted = formatted[:max_length - 3] + "..."
-        logger.warning(f"Metadata truncated from {len(formatted)} to {max_length} characters")
+        logger.warning(f"Metadata truncated to {max_length} characters")
 
     logger.info(f"Formatted metadata: {len(formatted)} characters")
     return formatted

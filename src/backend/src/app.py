@@ -314,6 +314,8 @@ quality_routes.register_routes(app)
 datasets_routes.register_routes(app)
 data_contracts_routes.register_routes(app)
 data_product_routes.register_routes(app)
+from src.routes import genie_space_routes
+genie_space_routes.register_routes(app)
 from src.routes import approvals_routes
 approvals_routes.register_routes(app)
 
