@@ -75,6 +75,43 @@ async def get_genie_space(
         raise HTTPException(status_code=500, detail="Failed to fetch Genie Space")
 
 
+@router.delete("/{space_id}")
+async def delete_genie_space_endpoint(
+    space_id: str,
+    db: DBSessionDep,
+    current_user: CurrentUserDep,
+    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_WRITE)),
+):
+    """Delete a Genie Space by its Databricks space ID."""
+    from src.common import genie_client
+    from src.common.workspace_client import get_workspace_client
+
+    try:
+        # Verify the space exists in the local DB
+        space = genie_space_repo.get_by_space_id(db, space_id=space_id)
+        if not space:
+            raise HTTPException(status_code=404, detail=f"Genie Space '{space_id}' not found")
+
+        # Delete from Databricks
+        try:
+            ws = get_workspace_client()
+            genie_client.delete_genie_space(ws, space_id)
+        except Exception as e:
+            logger.warning(f"Failed to delete Genie Space from Databricks (may already be deleted): {e}")
+
+        # Delete from local DB
+        genie_space_repo.delete_by_space_id(db, space_id)
+        db.commit()
+
+        logger.info(f"Deleted Genie Space {space_id} by {current_user.email}")
+        return {"detail": "Genie Space deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception(f"Error deleting Genie Space {space_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete Genie Space")
+
+
 def register_routes(app):
     app.include_router(router)
 

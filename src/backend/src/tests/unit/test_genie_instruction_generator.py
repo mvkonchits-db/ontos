@@ -7,11 +7,14 @@ os.environ['SKIP_STARTUP_TASKS'] = 'true'
 Tests for the Genie Instruction Generator.
 
 Covers:
-- Products with output ports → structured instructions
-- Products with domain → domain section included
+- generate_genie_config returns dict with 'instructions' and 'sample_questions'
+- generate_genie_instructions backward compat returns string
+- Products with output ports -> structured instructions
+- Products with domain -> domain section included
 - Truncation at max_length
-- No products → empty string
+- No products -> empty result
 - Join detection between tables sharing column names
+- Sample question generation
 """
 
 import pytest
@@ -77,14 +80,101 @@ def _make_table_info(columns):
 
 
 # =========================================================================
-# Tests
+# Tests for generate_genie_config (new dict return)
+# =========================================================================
+
+class TestGenerateGenieConfig:
+    """Test the main generate_genie_config function."""
+
+    def test_empty_product_ids_returns_empty_dict(self):
+        """No product IDs -> empty instructions and sample_questions."""
+        from src.common.genie_instruction_generator import generate_genie_config
+
+        result = generate_genie_config(product_ids=[], db=MagicMock())
+        assert isinstance(result, dict)
+        assert result['instructions'] == ''
+        assert result['sample_questions'] == []
+
+    @patch("src.repositories.data_products_repository.data_product_repo")
+    def test_no_products_found_returns_empty_dict(self, mock_repo):
+        """All product IDs resolve to None -> empty dict."""
+        from src.common.genie_instruction_generator import generate_genie_config
+
+        mock_repo.get.return_value = None
+        result = generate_genie_config(product_ids=["p1", "p2"], db=MagicMock())
+        assert result['instructions'] == ''
+        assert result['sample_questions'] == []
+
+    @patch("src.repositories.data_products_repository.data_product_repo")
+    def test_returns_instructions_and_sample_questions(self, mock_repo):
+        """Should return both instructions string and sample questions list."""
+        from src.common.genie_instruction_generator import generate_genie_config
+
+        product = _make_product(
+            "p1", "Asset Health Analytics",
+            purpose="360-degree view of asset health",
+            output_ports=[
+                _make_output_port("gold_health", asset_identifier="cat.sch.gold_asset_health", description="Aggregated health"),
+            ]
+        )
+        mock_repo.get.return_value = product
+
+        result = generate_genie_config(product_ids=["p1"], db=MagicMock())
+
+        assert isinstance(result, dict)
+        assert 'instructions' in result
+        assert 'sample_questions' in result
+        assert isinstance(result['instructions'], str)
+        assert isinstance(result['sample_questions'], list)
+        assert len(result['instructions']) > 0
+        assert len(result['sample_questions']) > 0
+
+    @patch("src.repositories.data_products_repository.data_product_repo")
+    def test_sample_questions_include_table_names(self, mock_repo):
+        """Sample questions should reference actual table names."""
+        from src.common.genie_instruction_generator import generate_genie_config
+
+        product = _make_product(
+            "p1", "Asset Analytics",
+            output_ports=[
+                _make_output_port("gold", asset_identifier="cat.sch.gold_health"),
+                _make_output_port("silver", asset_identifier="cat.sch.silver_assets"),
+            ]
+        )
+        mock_repo.get.return_value = product
+
+        result = generate_genie_config(product_ids=["p1"], db=MagicMock())
+        questions_text = " ".join(result['sample_questions'])
+
+        assert "gold_health" in questions_text
+
+    @patch("src.repositories.data_products_repository.data_product_repo")
+    def test_sample_questions_capped_at_five(self, mock_repo):
+        """Should not return more than 5 sample questions."""
+        from src.common.genie_instruction_generator import generate_genie_config
+
+        # Create product with many ports to trigger many questions
+        ports = [
+            _make_output_port(f"tbl_{i}", asset_identifier=f"cat.sch.table_{i}")
+            for i in range(20)
+        ]
+        product = _make_product("p1", "Big Product", output_ports=ports)
+        mock_repo.get.return_value = product
+
+        result = generate_genie_config(product_ids=["p1"], db=MagicMock())
+
+        assert len(result['sample_questions']) <= 5
+
+
+# =========================================================================
+# Tests for generate_genie_instructions (backward compat)
 # =========================================================================
 
 class TestGenerateGenieInstructions:
-    """Test the main generate_genie_instructions function."""
+    """Test the backward-compatible generate_genie_instructions function."""
 
     def test_empty_product_ids_returns_empty(self):
-        """No product IDs → empty string."""
+        """No product IDs -> empty string."""
         from src.common.genie_instruction_generator import generate_genie_instructions
 
         result = generate_genie_instructions(product_ids=[], db=MagicMock())
@@ -92,7 +182,7 @@ class TestGenerateGenieInstructions:
 
     @patch("src.repositories.data_products_repository.data_product_repo")
     def test_no_products_found_returns_empty(self, mock_repo):
-        """All product IDs resolve to None → empty string."""
+        """All product IDs resolve to None -> empty string."""
         from src.common.genie_instruction_generator import generate_genie_instructions
 
         mock_repo.get.return_value = None
@@ -166,7 +256,7 @@ class TestGenerateGenieInstructions:
 
     @patch("src.repositories.data_products_repository.data_product_repo")
     def test_join_detection_shared_columns(self, mock_repo):
-        """Tables sharing column names produce join hints."""
+        """Tables sharing column names produce join hints in instructions."""
         from src.common.genie_instruction_generator import generate_genie_instructions
 
         product = _make_product(
@@ -200,7 +290,7 @@ class TestGenerateGenieInstructions:
             product_ids=["p1"], db=MagicMock(), ws_client=ws_client
         )
 
-        assert "### Join Relationships" in result
+        # Join hints should mention asset_id and the table names
         assert "asset_id" in result
         assert "gold_health" in result
         assert "silver_assets" in result
@@ -292,7 +382,7 @@ class TestGenerateGenieInstructions:
 
 
 class TestJoinDetection:
-    """Focused tests for the _build_join_section helper."""
+    """Focused tests for the _build_join_section helper (backward compat)."""
 
     def test_single_table_no_joins(self):
         from src.common.genie_instruction_generator import _build_join_section

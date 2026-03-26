@@ -4,6 +4,8 @@ Genie Instruction Generator
 Generates rich Genie Space instructions by assembling product metadata,
 table schemas, domain context, join hints, and data contract info.
 
+Returns a dict with 'instructions' (text) and 'sample_questions' (list).
+
 Phase 2 of Genie Space PRD — enriching instructions beyond basic rich-text metadata.
 """
 
@@ -17,29 +19,34 @@ from src.common.logging import get_logger
 logger = get_logger(__name__)
 
 
-def generate_genie_instructions(
+def generate_genie_config(
     product_ids: List[str],
     db: Session,
     ws_client=None,
-    max_length: int = 5000,
-) -> str:
-    """Generate structured Genie Space instructions from product metadata.
+    max_instruction_length: int = 5000,
+) -> Dict:
+    """Generate structured Genie Space config from product metadata.
 
     Assembles domain descriptions, product info, table schemas with column
-    details (via Unity Catalog), join hints between tables, and linked
-    data contract context.
+    details (via Unity Catalog), compact join hints within product sections,
+    and linked data contract context.
 
     Args:
         product_ids: Data Product UUIDs to include.
         db: SQLAlchemy session.
         ws_client: Optional Databricks WorkspaceClient for UC column metadata.
-        max_length: Maximum character length for the output (default 5000).
+        max_instruction_length: Maximum character length for instructions (default 5000).
 
     Returns:
-        Markdown-formatted instruction string, or empty string if no products found.
+        Dict with:
+          - 'instructions': Markdown-formatted instruction string
+          - 'sample_questions': List of auto-generated sample question strings
+        Returns {'instructions': '', 'sample_questions': []} if no products found.
     """
+    empty_result = {'instructions': '', 'sample_questions': []}
+
     if not product_ids:
-        return ""
+        return empty_result
 
     import src.repositories.data_products_repository as _dp_repo_mod
     from src.db_models.data_domains import DataDomain as DataDomainDb
@@ -60,14 +67,14 @@ def generate_genie_instructions(
             logger.error(f"Error loading product {pid}: {e}", exc_info=True)
 
     if not products:
-        return ""
+        return empty_result
 
     # ── Section builders (ordered by priority for truncation) ──
 
     # 1. Domain context
     domain_sections = _build_domain_sections(products, db, DataDomainDb)
 
-    # 2. Product + table descriptions
+    # 2. Product + table descriptions (with inline join hints)
     product_sections = []
     all_table_columns: Dict[str, List[Tuple[str, str]]] = {}  # fqn -> [(col, type)]
 
@@ -76,16 +83,54 @@ def generate_genie_instructions(
         product_sections.append(section)
         all_table_columns.update(table_cols)
 
-    # 3. Join hints
-    join_section = _build_join_section(all_table_columns)
+    # 3. Generate compact join notes per product section
+    join_notes = _build_compact_join_notes(all_table_columns)
 
-    # 4. Assemble with priority-based truncation
-    return _assemble_and_truncate(
+    # 4. Assemble instructions with priority-based truncation
+    instructions = _assemble_and_truncate(
         domain_sections=domain_sections,
         product_sections=product_sections,
-        join_section=join_section,
-        max_length=max_length,
+        join_notes=join_notes,
+        max_length=max_instruction_length,
     )
+
+    # 5. Generate sample questions from product context
+    sample_questions = _generate_sample_questions(products)
+
+    return {
+        'instructions': instructions,
+        'sample_questions': sample_questions,
+    }
+
+
+# Keep backward-compatible alias that returns just the instruction string
+def generate_genie_instructions(
+    product_ids: List[str],
+    db: Session,
+    ws_client=None,
+    max_length: int = 5000,
+) -> str:
+    """Generate structured Genie Space instructions from product metadata.
+
+    Backward-compatible wrapper around generate_genie_config that returns
+    only the instructions string.
+
+    Args:
+        product_ids: Data Product UUIDs to include.
+        db: SQLAlchemy session.
+        ws_client: Optional Databricks WorkspaceClient for UC column metadata.
+        max_length: Maximum character length for the output (default 5000).
+
+    Returns:
+        Markdown-formatted instruction string, or empty string if no products found.
+    """
+    config = generate_genie_config(
+        product_ids=product_ids,
+        db=db,
+        ws_client=ws_client,
+        max_instruction_length=max_length,
+    )
+    return config.get('instructions', '')
 
 
 def _build_domain_sections(products, db: Session, DataDomainDb) -> str:
@@ -210,10 +255,14 @@ def _build_contract_section(contract_ids: Set[str], db: Session, DataContractDb)
     return "\n".join(parts)
 
 
-def _build_join_section(
+def _build_compact_join_notes(
     all_table_columns: Dict[str, List[Tuple[str, str]]]
 ) -> str:
-    """Detect shared column names across tables and generate join hints."""
+    """Detect shared column names across tables and generate compact join notes.
+
+    Instead of a separate "### Join Relationships" section, produces a concise
+    note suitable for appending after the Tables listing.
+    """
     if len(all_table_columns) < 2:
         return ""
 
@@ -230,6 +279,42 @@ def _build_join_section(
     for col_name, fqns in sorted(col_to_tables.items()):
         if col_name in skip_cols or len(fqns) < 2:
             continue
+        short_names = sorted(fqn.rsplit(".", 1)[-1] for fqn in fqns)
+        join_hints.append(f"- {' & '.join(short_names)}: join on {col_name}")
+
+    if not join_hints:
+        return ""
+
+    # Deduplicate pairs that might appear from multiple shared columns
+    unique_hints = list(dict.fromkeys(join_hints))
+    lines = ["Join hints:"]
+    lines.extend(unique_hints)
+    return "\n".join(lines)
+
+
+# Keep the old function name for backward compatibility in tests
+def _build_join_section(
+    all_table_columns: Dict[str, List[Tuple[str, str]]]
+) -> str:
+    """Detect shared column names across tables and generate join hints.
+
+    Backward-compatible wrapper that produces the old "### Join Relationships"
+    format used by existing tests.
+    """
+    if len(all_table_columns) < 2:
+        return ""
+
+    col_to_tables: Dict[str, Set[str]] = defaultdict(set)
+    for fqn, cols in all_table_columns.items():
+        for col_name, _ in cols:
+            col_to_tables[col_name].add(fqn)
+
+    skip_cols = {"id", "created_at", "updated_at", "created_by", "updated_by"}
+    join_hints = []
+
+    for col_name, fqns in sorted(col_to_tables.items()):
+        if col_name in skip_cols or len(fqns) < 2:
+            continue
         sorted_fqns = sorted(fqns)
         for i in range(len(sorted_fqns)):
             for j in range(i + 1, len(sorted_fqns)):
@@ -240,16 +325,45 @@ def _build_join_section(
     if not join_hints:
         return ""
 
-    # Deduplicate (same pair may share multiple cols — keep all)
     lines = ["### Join Relationships"]
     lines.extend(join_hints)
     return "\n".join(lines)
 
 
+def _generate_sample_questions(products) -> List[str]:
+    """Generate 3-5 sample questions from product context.
+
+    Creates relevant natural-language questions based on product names,
+    table names, and domain context.
+    """
+    questions = []
+
+    for product in products:
+        product_label = product.name.lower()
+
+        # Get table short names from output ports
+        table_names = []
+        for port in (product.output_ports or []):
+            if port.asset_type in ("table", "view") and port.asset_identifier:
+                short = port.asset_identifier.rsplit(".", 1)[-1] if "." in port.asset_identifier else port.asset_identifier
+                table_names.append(short)
+
+        if table_names:
+            first_table = table_names[0]
+            questions.append(f"Show me the top 10 records from {first_table}")
+            if len(table_names) > 1:
+                questions.append(f"How many records are in each of the {product_label} tables?")
+
+        questions.append(f"What are the key trends in {product_label}?")
+
+    # Cap at 5 questions
+    return questions[:5]
+
+
 def _assemble_and_truncate(
     domain_sections: str,
     product_sections: List[str],
-    join_section: str,
+    join_notes: str,
     max_length: int,
 ) -> str:
     """Assemble all sections and truncate with priority.
@@ -257,21 +371,21 @@ def _assemble_and_truncate(
     Priority (keep first, trim last):
     1. Domain context
     2. Product + table descriptions
-    3. Join hints
+    3. Join notes
     """
     parts = []
     if domain_sections:
         parts.append(domain_sections)
     parts.extend(product_sections)
-    if join_section:
-        parts.append(join_section)
+    if join_notes:
+        parts.append(join_notes)
 
     result = "\n".join(parts).strip()
 
     if len(result) <= max_length:
         return result
 
-    # Truncate: drop join section first, then trim product sections
+    # Truncate: drop join notes first, then trim product sections
     parts_no_joins = []
     if domain_sections:
         parts_no_joins.append(domain_sections)

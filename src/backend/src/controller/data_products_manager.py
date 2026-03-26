@@ -1842,19 +1842,21 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 # Step 3: Get product details for formatting
                 products = [self._repo.get(db, id=pid) for pid in product_ids if self._repo.get(db, id=pid)]
 
-                # Step 4: Format metadata as instructions (Phase 2: enriched generator)
-                from src.common.genie_instruction_generator import generate_genie_instructions
-                instructions = generate_genie_instructions(
+                # Step 4: Generate instructions and sample questions (Phase 2: enriched generator)
+                from src.common.genie_instruction_generator import generate_genie_config
+                genie_config = generate_genie_config(
                     product_ids=product_ids,
                     db=db,
                     ws_client=self._ws_client,
                 )
+                instructions = genie_config.get('instructions', '')
+                sample_questions = genie_config.get('sample_questions')
                 # Fallback to basic metadata if generator fails
                 if not instructions:
                     instructions = genie_client.format_metadata_for_genie(metadata_map, products)
                 logger.info(f"Formatted {len(instructions)} characters of metadata")
 
-                # Step 5: Create Genie Space via API
+                # Step 5: Create Genie Space via data-rooms API
                 space_name = f"Data Product Space ({len(products)} products)"
                 if len(products) == 1:
                     space_name = f"{products[0].name} - Genie Space"
@@ -1872,7 +1874,8 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                     datasets=datasets,
                     warehouse_id=warehouse_id,
                     description=f"Genie Space for {len(products)} Data Product(s)",
-                    instructions=instructions
+                    instructions=instructions,
+                    sample_questions=sample_questions,
                 )
 
                 # Step 6: Persist to database

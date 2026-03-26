@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Loader2, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ExternalLink, Trash2 } from 'lucide-react';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,6 +21,15 @@ interface ProductInfo {
   outputPorts: OutputPortInfo[];
 }
 
+interface ExistingSpace {
+  id: string;
+  space_id: string;
+  space_name: string;
+  space_url?: string;
+  status: string;
+  created_at: string;
+}
+
 interface GenieSpaceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -31,13 +40,15 @@ interface GenieSpaceDialogProps {
 type DialogState = 'idle' | 'creating' | 'success' | 'error';
 
 export default function GenieSpaceDialog({ open, onOpenChange, products, onSuccess }: GenieSpaceDialogProps) {
-  const { post, get } = useApi();
+  const { post, get, del } = useApi();
   const { toast } = useToast();
 
   const [state, setState] = useState<DialogState>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const [spaceUrl, setSpaceUrl] = useState<string | null>(null);
   const [spaceName, setSpaceName] = useState('');
+  const [existingSpaces, setExistingSpaces] = useState<ExistingSpace[]>([]);
+  const [deletingSpaceId, setDeletingSpaceId] = useState<string | null>(null);
 
   // Track which tables are selected (all selected by default)
   const allTables = products.flatMap(p =>
@@ -46,6 +57,18 @@ export default function GenieSpaceDialog({ open, onOpenChange, products, onSucce
       .map(port => `${p.id}::${port.assetIdentifier}`)
   );
   const [selectedTables, setSelectedTables] = useState<Set<string>>(new Set(allTables));
+
+  // Fetch existing Genie Spaces when dialog opens
+  const fetchExistingSpaces = useCallback(async () => {
+    try {
+      const resp = await get<ExistingSpace[]>('/api/genie-spaces/my');
+      if (resp.data && Array.isArray(resp.data)) {
+        setExistingSpaces(resp.data);
+      }
+    } catch {
+      // Not critical
+    }
+  }, [get]);
 
   // Reset state when dialog opens
   const handleOpenChange = useCallback((isOpen: boolean) => {
@@ -60,9 +83,10 @@ export default function GenieSpaceDialog({ open, onOpenChange, products, onSucce
           .map(port => `${p.id}::${port.assetIdentifier}`)
       );
       setSelectedTables(new Set(tables));
+      fetchExistingSpaces();
     }
     onOpenChange(isOpen);
-  }, [onOpenChange, products]);
+  }, [onOpenChange, products, fetchExistingSpaces]);
 
   const toggleTable = (key: string) => {
     setSelectedTables(prev => {
@@ -96,6 +120,19 @@ export default function GenieSpaceDialog({ open, onOpenChange, products, onSucce
   };
 
   const selectedCount = selectedTables.size;
+
+  const handleDelete = async (spaceId: string) => {
+    setDeletingSpaceId(spaceId);
+    try {
+      await del(`/api/genie-spaces/${spaceId}`);
+      setExistingSpaces(prev => prev.filter(s => s.space_id !== spaceId));
+      toast({ title: 'Genie Space Deleted', description: 'The Genie Space has been deleted.' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || 'Failed to delete Genie Space.', variant: 'destructive' });
+    } finally {
+      setDeletingSpaceId(null);
+    }
+  };
 
   const handleCreate = async () => {
     if (selectedCount === 0) return;
@@ -191,6 +228,50 @@ export default function GenieSpaceDialog({ open, onOpenChange, products, onSucce
                 all tables from the product's output ports.
               </DialogDescription>
             </DialogHeader>
+
+            {/* Existing Genie Spaces */}
+            {existingSpaces.length > 0 && (
+              <>
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium text-muted-foreground">Existing Genie Spaces</h4>
+                  {existingSpaces.map(space => (
+                    <div key={space.space_id} className="flex items-center justify-between border rounded-md p-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{space.space_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(space.created_at).toLocaleDateString()}
+                          {space.status !== 'active' && (
+                            <Badge variant="secondary" className="ml-2 text-xs">{space.status}</Badge>
+                          )}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 ml-2">
+                        {space.space_url && (
+                          <Button variant="ghost" size="sm" asChild>
+                            <a href={space.space_url} target="_blank" rel="noopener noreferrer">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                            </a>
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(space.space_id)}
+                          disabled={deletingSpaceId === space.space_id}
+                        >
+                          {deletingSpaceId === space.space_id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <Separator />
+              </>
+            )}
 
             <ScrollArea className="max-h-[340px]">
               <div className="space-y-4 pr-2">

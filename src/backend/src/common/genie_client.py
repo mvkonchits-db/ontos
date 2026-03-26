@@ -2,57 +2,17 @@
 Genie Spaces Client
 
 Provides functions for creating Databricks Genie Spaces from Data Products.
-Uses the native Databricks SDK ``ws.genie.create_space()`` method.
+Uses the ``/api/2.0/data-rooms/`` REST API with separate calls for
+instructions and sample questions.
 """
 
-import json
-import uuid
-from databricks.sdk import WorkspaceClient
 from typing import List, Dict, Optional, Any
+from databricks.sdk import WorkspaceClient
 from sqlalchemy.orm import Session
 
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
-
-
-def _build_serialized_space(
-    datasets: List[str],
-    instructions: Optional[str] = None,
-) -> str:
-    """Build the serialized_space JSON expected by the Genie API.
-
-    Args:
-        datasets: List of catalog.schema.table identifiers
-        instructions: Optional plain-text instructions (max 5000 chars)
-
-    Returns:
-        JSON string with the Genie space configuration
-    """
-    # Tables must use 'identifier' key, sorted alphabetically
-    tables = sorted(
-        [{"identifier": ds} for ds in datasets],
-        key=lambda t: t["identifier"],
-    )
-
-    space = {
-        "version": 2,
-        "config": {},
-        "data_sources": {"tables": tables},
-    }
-
-    if instructions:
-        instruction_id = uuid.uuid4().hex
-        space["instructions"] = {
-            "text_instructions": [
-                {
-                    "id": instruction_id,
-                    "content": [instructions[:5000]],
-                }
-            ]
-        }
-
-    return json.dumps(space)
 
 
 def create_genie_space(
@@ -62,9 +22,15 @@ def create_genie_space(
     warehouse_id: str,
     description: Optional[str] = None,
     instructions: Optional[str] = None,
+    sample_questions: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
-    Create a Genie Space using the Databricks SDK.
+    Create a Genie Space using the data-rooms REST API.
+
+    Steps:
+      1. POST /api/2.0/data-rooms/ with table_identifiers
+      2. POST instructions (if provided)
+      3. POST sample questions (if provided)
 
     Args:
         ws_client: Databricks workspace client
@@ -72,7 +38,8 @@ def create_genie_space(
         datasets: List of catalog.schema.table identifiers
         warehouse_id: SQL warehouse ID for the space
         description: Optional space description
-        instructions: Optional context/instructions (max 5000 chars)
+        instructions: Optional context/instructions text
+        sample_questions: Optional list of sample question strings
 
     Returns:
         Dict with space_id, space_url, status
@@ -86,27 +53,55 @@ def create_genie_space(
     if not warehouse_id:
         raise ValueError("warehouse_id is required to create a Genie Space")
 
-    serialized = _build_serialized_space(datasets, instructions)
-
     logger.info(f"Creating Genie Space '{name}' with {len(datasets)} datasets on warehouse {warehouse_id}")
-    logger.debug(f"Serialized space config: {serialized[:500]}...")
+
+    # Step 1: Create space via data-rooms API
+    payload = {
+        "display_name": name,
+        "warehouse_id": warehouse_id,
+        "table_identifiers": datasets,
+        "run_as_type": "VIEWER",
+    }
+    if description:
+        payload["description"] = description
 
     try:
-        response = ws_client.genie.create_space(
-            warehouse_id=warehouse_id,
-            serialized_space=serialized,
-            title=name,
-            description=description or "",
-        )
+        result = ws_client.api_client.do('POST', '/api/2.0/data-rooms/', body=payload)
+        space_id = result.get('space_id') or result.get('id')
 
-        space_id = response.space_id
         if not space_id:
             raise ValueError("No space_id returned from Genie API")
+
+        logger.info(f"Created Genie Space: {space_id}")
+
+        # Step 2: Add instructions (if provided)
+        if instructions:
+            try:
+                ws_client.api_client.do(
+                    'POST',
+                    f'/api/2.0/data-rooms/{space_id}/instructions',
+                    body={"instruction_text": instructions[:5000]},
+                )
+                logger.info(f"Added instructions to Genie Space {space_id}")
+            except Exception as e:
+                logger.warning(f"Failed to add instructions to space {space_id}: {e}")
+
+        # Step 3: Add sample questions (if provided)
+        if sample_questions:
+            for q in sample_questions:
+                try:
+                    ws_client.api_client.do(
+                        'POST',
+                        f'/api/2.0/data-rooms/{space_id}/curated-questions',
+                        body={"question_text": q, "question_type": "SAMPLE_QUESTION"},
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to add sample question to space {space_id}: {e}")
+            logger.info(f"Added {len(sample_questions)} sample questions to Genie Space {space_id}")
 
         workspace_url = ws_client.config.host.rstrip('/')
         space_url = f"{workspace_url}/genie/rooms/{space_id}"
 
-        logger.info(f"Successfully created Genie Space: {space_id}")
         logger.info(f"Genie Space URL: {space_url}")
 
         return {
@@ -118,6 +113,52 @@ def create_genie_space(
     except Exception as e:
         logger.error(f"Failed to create Genie Space: {e}", exc_info=True)
         raise
+
+
+def delete_genie_space(ws_client: WorkspaceClient, space_id: str) -> None:
+    """Delete a Genie Space from Databricks.
+
+    Args:
+        ws_client: Databricks workspace client
+        space_id: The Genie space ID to delete
+    """
+    logger.info(f"Deleting Genie Space: {space_id}")
+    ws_client.api_client.do('DELETE', f'/api/2.0/data-rooms/{space_id}')
+    logger.info(f"Deleted Genie Space: {space_id}")
+
+
+def update_genie_space_instructions(
+    ws_client: WorkspaceClient, space_id: str, instructions: str
+) -> None:
+    """Replace all instructions on a Genie Space.
+
+    Deletes existing instructions then adds the new one.
+
+    Args:
+        ws_client: Databricks workspace client
+        space_id: The Genie space ID
+        instructions: New instruction text
+    """
+    # Delete existing instructions
+    try:
+        existing = ws_client.api_client.do(
+            'GET', f'/api/2.0/data-rooms/{space_id}/instructions'
+        )
+        for instr in existing.get('instructions', []):
+            ws_client.api_client.do(
+                'DELETE',
+                f'/api/2.0/data-rooms/{space_id}/instructions/{instr["id"]}',
+            )
+    except Exception:
+        pass
+
+    # Add new instructions
+    ws_client.api_client.do(
+        'POST',
+        f'/api/2.0/data-rooms/{space_id}/instructions',
+        body={"instruction_text": instructions[:5000]},
+    )
+    logger.info(f"Updated instructions for Genie Space {space_id}")
 
 
 def collect_datasets_from_products(product_ids: List[str], db: Session) -> List[str]:

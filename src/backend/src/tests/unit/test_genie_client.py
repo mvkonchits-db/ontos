@@ -4,85 +4,199 @@ os.environ['TESTING'] = 'true'
 os.environ['SKIP_STARTUP_TASKS'] = 'true'
 
 """
-Tests for the Genie Spaces client and routes.
+Tests for the Genie Spaces client.
 
 Covers:
-- Serialized space payload construction
+- create_genie_space via data-rooms API
+- delete_genie_space
 - Dataset collection from product output ports
 - Metadata formatting with truncation
-- Genie Space API route responses
 """
 
 import json
 import pytest
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock, call
 from uuid import uuid4
 
 from src.common.genie_client import (
-    _build_serialized_space,
     collect_datasets_from_products,
     format_metadata_for_genie,
     create_genie_space,
+    delete_genie_space,
 )
 
 
 # =========================================================================
-# _build_serialized_space
+# create_genie_space (data-rooms API)
 # =========================================================================
 
-class TestBuildSerializedSpace:
-    """Verify the Genie API payload format is correct."""
+class TestCreateGenieSpace:
+    """Verify the data-rooms API calls are made correctly."""
 
-    def test_basic_payload_structure(self):
-        """Payload must have version, data_sources.tables, and config."""
-        result = json.loads(_build_serialized_space(["cat.sch.tbl1"]))
+    def test_calls_data_rooms_api(self):
+        """Should POST to /api/2.0/data-rooms/ with correct payload."""
+        mock_ws = MagicMock()
+        mock_ws.config.host = "https://workspace.databricks.com"
+        mock_ws.api_client.do.return_value = {"space_id": "space-abc-123"}
 
-        assert result["version"] == 2
-        assert "data_sources" in result
-        assert "tables" in result["data_sources"]
-        assert result["data_sources"]["tables"] == [{"identifier": "cat.sch.tbl1"}]
+        result = create_genie_space(
+            ws_client=mock_ws,
+            name="Test Space",
+            datasets=["cat.sch.tbl"],
+            warehouse_id="wh-123",
+            description="A test space",
+        )
 
-    def test_tables_sorted_alphabetically(self):
-        """Tables must be sorted by identifier for deterministic API calls."""
-        result = json.loads(_build_serialized_space(["z.z.z", "a.a.a", "m.m.m"]))
+        assert result["space_id"] == "space-abc-123"
+        assert "genie/rooms/space-abc-123" in result["space_url"]
+        assert result["status"] == "active"
 
-        identifiers = [t["identifier"] for t in result["data_sources"]["tables"]]
-        assert identifiers == ["a.a.a", "m.m.m", "z.z.z"]
+        # Verify the POST call to data-rooms
+        first_call = mock_ws.api_client.do.call_args_list[0]
+        assert first_call[0][0] == 'POST'
+        assert first_call[0][1] == '/api/2.0/data-rooms/'
+        body = first_call[1]['body']
+        assert body["display_name"] == "Test Space"
+        assert body["warehouse_id"] == "wh-123"
+        assert body["table_identifiers"] == ["cat.sch.tbl"]
+        assert body["run_as_type"] == "VIEWER"
+        assert body["description"] == "A test space"
 
-    def test_instructions_included_when_provided(self):
-        """Instructions should appear in text_instructions with a valid hex ID."""
-        result = json.loads(_build_serialized_space(
-            ["cat.sch.tbl"],
-            instructions="Use this table for sales analytics."
-        ))
+    def test_adds_instructions_separately(self):
+        """Instructions should be posted to /instructions endpoint after space creation."""
+        mock_ws = MagicMock()
+        mock_ws.config.host = "https://workspace.databricks.com"
+        mock_ws.api_client.do.return_value = {"space_id": "space-abc-123"}
 
-        assert "instructions" in result
-        text_instructions = result["instructions"]["text_instructions"]
-        assert len(text_instructions) == 1
-        assert text_instructions[0]["content"] == ["Use this table for sales analytics."]
-        # ID should be 32-char hex
-        assert len(text_instructions[0]["id"]) == 32
+        create_genie_space(
+            ws_client=mock_ws,
+            name="Test Space",
+            datasets=["cat.sch.tbl"],
+            warehouse_id="wh-123",
+            instructions="Use this for testing",
+        )
 
-    def test_instructions_truncated_to_5000_chars(self):
+        # Should have at least 2 calls: create space + add instructions
+        assert mock_ws.api_client.do.call_count >= 2
+
+        instructions_call = mock_ws.api_client.do.call_args_list[1]
+        assert instructions_call[0][0] == 'POST'
+        assert '/instructions' in instructions_call[0][1]
+        assert instructions_call[1]['body']['instruction_text'] == "Use this for testing"
+
+    def test_adds_sample_questions(self):
+        """Sample questions should be posted to /curated-questions endpoint."""
+        mock_ws = MagicMock()
+        mock_ws.config.host = "https://workspace.databricks.com"
+        mock_ws.api_client.do.return_value = {"space_id": "space-abc-123"}
+
+        questions = ["What is total revenue?", "Show top 10 customers"]
+        create_genie_space(
+            ws_client=mock_ws,
+            name="Test Space",
+            datasets=["cat.sch.tbl"],
+            warehouse_id="wh-123",
+            sample_questions=questions,
+        )
+
+        # Should have 3 calls: create space + 2 sample questions
+        assert mock_ws.api_client.do.call_count == 3
+
+        for i, q in enumerate(questions):
+            sq_call = mock_ws.api_client.do.call_args_list[1 + i]
+            assert sq_call[0][0] == 'POST'
+            assert '/curated-questions' in sq_call[0][1]
+            assert sq_call[1]['body']['question_text'] == q
+            assert sq_call[1]['body']['question_type'] == "SAMPLE_QUESTION"
+
+    def test_instructions_truncated_to_5000(self):
         """Instructions exceeding 5000 chars should be truncated."""
+        mock_ws = MagicMock()
+        mock_ws.config.host = "https://workspace.databricks.com"
+        mock_ws.api_client.do.return_value = {"space_id": "space-abc-123"}
+
         long_text = "x" * 10000
-        result = json.loads(_build_serialized_space(["cat.sch.tbl"], instructions=long_text))
+        create_genie_space(
+            ws_client=mock_ws,
+            name="Test",
+            datasets=["cat.sch.tbl"],
+            warehouse_id="wh-123",
+            instructions=long_text,
+        )
 
-        content = result["instructions"]["text_instructions"][0]["content"][0]
-        assert len(content) == 5000
+        instructions_call = mock_ws.api_client.do.call_args_list[1]
+        assert len(instructions_call[1]['body']['instruction_text']) == 5000
 
-    def test_no_instructions_when_none(self):
-        """No instructions key when instructions is None."""
-        result = json.loads(_build_serialized_space(["cat.sch.tbl"]))
+    def test_uses_id_fallback_for_space_id(self):
+        """Should use 'id' field if 'space_id' is not in response."""
+        mock_ws = MagicMock()
+        mock_ws.config.host = "https://workspace.databricks.com"
+        mock_ws.api_client.do.return_value = {"id": "room-xyz-456"}
 
-        assert "instructions" not in result
+        result = create_genie_space(
+            ws_client=mock_ws,
+            name="Test",
+            datasets=["cat.sch.tbl"],
+            warehouse_id="wh-123",
+        )
 
-    def test_multiple_tables(self):
-        """Multiple datasets produce multiple table entries."""
-        datasets = [f"cat.sch.tbl{i}" for i in range(5)]
-        result = json.loads(_build_serialized_space(datasets))
+        assert result["space_id"] == "room-xyz-456"
 
-        assert len(result["data_sources"]["tables"]) == 5
+    def test_raises_on_empty_datasets(self):
+        """Should raise ValueError if no datasets provided."""
+        mock_ws = MagicMock()
+
+        with pytest.raises(ValueError, match="(?i)at least one dataset"):
+            create_genie_space(
+                ws_client=mock_ws,
+                name="Empty Space",
+                datasets=[],
+                warehouse_id="wh-123",
+            )
+
+    def test_raises_on_missing_warehouse(self):
+        """Should raise ValueError if warehouse_id is empty."""
+        mock_ws = MagicMock()
+
+        with pytest.raises(ValueError, match="warehouse_id"):
+            create_genie_space(
+                ws_client=mock_ws,
+                name="No Warehouse",
+                datasets=["cat.sch.tbl"],
+                warehouse_id="",
+            )
+
+    def test_raises_on_no_space_id_returned(self):
+        """Should raise ValueError if API returns no space_id or id."""
+        mock_ws = MagicMock()
+        mock_ws.api_client.do.return_value = {}
+
+        with pytest.raises(ValueError, match="No space_id"):
+            create_genie_space(
+                ws_client=mock_ws,
+                name="Test",
+                datasets=["cat.sch.tbl"],
+                warehouse_id="wh-123",
+            )
+
+
+# =========================================================================
+# delete_genie_space
+# =========================================================================
+
+class TestDeleteGenieSpace:
+    """Verify Genie Space deletion."""
+
+    def test_calls_delete_api(self):
+        """Should call DELETE on the data-rooms API."""
+        mock_ws = MagicMock()
+        mock_ws.api_client.do.return_value = None
+
+        delete_genie_space(mock_ws, "space-to-delete")
+
+        mock_ws.api_client.do.assert_called_once_with(
+            'DELETE', '/api/2.0/data-rooms/space-to-delete'
+        )
 
 
 # =========================================================================
@@ -222,67 +336,3 @@ class TestFormatMetadataForGenie:
         result = format_metadata_for_genie({}, [])
 
         assert result == ""
-
-
-# =========================================================================
-# create_genie_space (mocked SDK)
-# =========================================================================
-
-class TestCreateGenieSpace:
-    """Verify the SDK call is made correctly."""
-
-    def test_calls_sdk_create_space(self):
-        """Should call ws.genie.create_space with correct args."""
-        mock_ws = MagicMock(spec=['genie', 'config'])
-        mock_ws.config.host = "https://workspace.databricks.com"
-
-        mock_response = MagicMock()
-        mock_response.space_id = "space-abc-123"
-        mock_ws.genie.create_space.return_value = mock_response
-
-        result = create_genie_space(
-            ws_client=mock_ws,
-            name="Test Space",
-            datasets=["cat.sch.tbl"],
-            warehouse_id="wh-123",
-            description="A test space",
-            instructions="Use this for testing",
-        )
-
-        assert result["space_id"] == "space-abc-123"
-        assert "genie/rooms/space-abc-123" in result["space_url"]
-        assert result["status"] == "active"
-
-        # Verify SDK was called with correct args
-        call_kwargs = mock_ws.genie.create_space.call_args.kwargs
-        assert call_kwargs["warehouse_id"] == "wh-123"
-        assert call_kwargs["title"] == "Test Space"
-        assert call_kwargs["description"] == "A test space"
-        # Verify serialized_space is valid JSON
-        serialized = json.loads(call_kwargs["serialized_space"])
-        assert serialized["version"] == 2
-        assert serialized["data_sources"]["tables"] == [{"identifier": "cat.sch.tbl"}]
-
-    def test_raises_on_empty_datasets(self):
-        """Should raise ValueError if no datasets provided."""
-        mock_ws = MagicMock()
-
-        with pytest.raises(ValueError, match="(?i)at least one dataset"):
-            create_genie_space(
-                ws_client=mock_ws,
-                name="Empty Space",
-                datasets=[],
-                warehouse_id="wh-123",
-            )
-
-    def test_raises_on_missing_warehouse(self):
-        """Should raise ValueError if warehouse_id is empty."""
-        mock_ws = MagicMock()
-
-        with pytest.raises(ValueError, match="warehouse_id"):
-            create_genie_space(
-                ws_client=mock_ws,
-                name="No Warehouse",
-                datasets=["cat.sch.tbl"],
-                warehouse_id="",
-            )
