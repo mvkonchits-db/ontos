@@ -1805,7 +1805,6 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 title="Genie Space Creation Started",
                 description=f"Genie Space creation for Data Product(s) {product_ids_str} initiated. "
                            "You will be notified when it's ready.",
-                status="info"
             )
         except Exception as e:
             logger.error(f"Failed to send initial Genie Space notification: {e}", exc_info=True)
@@ -1843,8 +1842,16 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 # Step 3: Get product details for formatting
                 products = [self._repo.get(db, id=pid) for pid in product_ids if self._repo.get(db, id=pid)]
 
-                # Step 4: Format metadata as instructions
-                instructions = genie_client.format_metadata_for_genie(metadata_map, products)
+                # Step 4: Format metadata as instructions (Phase 2: enriched generator)
+                from src.common.genie_instruction_generator import generate_genie_instructions
+                instructions = generate_genie_instructions(
+                    product_ids=product_ids,
+                    db=db,
+                    ws_client=self._ws_client,
+                )
+                # Fallback to basic metadata if generator fails
+                if not instructions:
+                    instructions = genie_client.format_metadata_for_genie(metadata_map, products)
                 logger.info(f"Formatted {len(instructions)} characters of metadata")
 
                 # Step 5: Create Genie Space via API
@@ -1886,13 +1893,14 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
 
                 # Step 7: Send success notification
                 if self._notifications_manager:
+                    from src.models.notifications import NotificationType
                     await self._notifications_manager.create_notification(
                         db=db,
                         user_id=user_email,
                         title="Genie Space Ready",
                         description=f"Your Genie Space '{space_name}' has been created with {len(datasets)} datasets.",
                         link=result['space_url'],
-                        status="success"
+                        type=NotificationType.SUCCESS,
                     )
 
         except Exception as e:
@@ -1902,12 +1910,13 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
             if self._notifications_manager:
                 try:
                     with session_factory() as db:
+                        from src.models.notifications import NotificationType
                         await self._notifications_manager.create_notification(
                             db=db,
                             user_id=user_email,
                             title="Genie Space Creation Failed",
                             description=f"Failed to create Genie Space: {str(e)}",
-                            status="error"
+                            type=NotificationType.ERROR,
                         )
                 except Exception as notify_error:
                     logger.error(f"Failed to send error notification: {notify_error}")
