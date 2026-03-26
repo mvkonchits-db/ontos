@@ -82,7 +82,7 @@ class TestCreateGenieSpace:
         instructions_call = mock_ws.api_client.do.call_args_list[1]
         assert instructions_call[0][0] == 'POST'
         assert '/instructions' in instructions_call[0][1]
-        assert instructions_call[1]['body']['instruction_text'] == "Use this for testing"
+        assert instructions_call[1]['body']['content'] == "Use this for testing"
         assert instructions_call[1]['body']['title'] == "Product Context"
 
     def test_adds_sample_questions(self):
@@ -126,7 +126,7 @@ class TestCreateGenieSpace:
         )
 
         instructions_call = mock_ws.api_client.do.call_args_list[1]
-        assert len(instructions_call[1]['body']['instruction_text']) == 5000
+        assert len(instructions_call[1]['body']['content']) == 5000
 
     def test_uses_id_fallback_for_space_id(self):
         """Should use 'id' field if 'space_id' is not in response."""

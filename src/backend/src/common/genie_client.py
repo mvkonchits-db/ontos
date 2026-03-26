@@ -82,7 +82,7 @@ def create_genie_space(
                     f'/api/2.0/data-rooms/{space_id}/instructions',
                     body={
                         "title": "Product Context",
-                        "instruction_text": instructions[:5000],
+                        "content": instructions[:5000],
                     },
                 )
                 logger.info(f"Added instructions to Genie Space {space_id}")

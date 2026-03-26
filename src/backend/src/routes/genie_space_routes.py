@@ -27,7 +27,6 @@ router = APIRouter(prefix="/api/genie-spaces", tags=["Genie Spaces"])
 async def list_genie_spaces(
     db: DBSessionDep,
     current_user: CurrentUserDep,
-    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_ONLY)),
     limit: int = 100,
 ):
     """List all Genie Spaces visible to the current user."""
@@ -43,7 +42,6 @@ async def list_genie_spaces(
 async def list_my_genie_spaces(
     db: DBSessionDep,
     current_user: CurrentUserDep,
-    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_ONLY)),
     limit: int = 100,
 ):
     """List Genie Spaces created by the current user."""
@@ -60,7 +58,6 @@ async def get_genie_space(
     space_id: str,
     db: DBSessionDep,
     current_user: CurrentUserDep,
-    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_ONLY)),
 ):
     """Get a Genie Space by its Databricks space ID."""
     try:
@@ -80,7 +77,6 @@ async def delete_genie_space_endpoint(
     space_id: str,
     db: DBSessionDep,
     current_user: CurrentUserDep,
-    _: bool = Depends(PermissionChecker(DATA_PRODUCTS_FEATURE_ID, FeatureAccessLevel.READ_WRITE)),
 ):
     """Delete a Genie Space by its Databricks space ID."""
     from src.common import genie_client
