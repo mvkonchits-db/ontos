@@ -83,6 +83,7 @@ class TestCreateGenieSpace:
         assert instructions_call[0][0] == 'POST'
         assert '/instructions' in instructions_call[0][1]
         assert instructions_call[1]['body']['instruction_text'] == "Use this for testing"
+        assert instructions_call[1]['body']['title'] == "Product Context"
 
     def test_adds_sample_questions(self):
         """Sample questions should be posted to /curated-questions endpoint."""
@@ -106,8 +107,8 @@ class TestCreateGenieSpace:
             sq_call = mock_ws.api_client.do.call_args_list[1 + i]
             assert sq_call[0][0] == 'POST'
             assert '/curated-questions' in sq_call[0][1]
-            assert sq_call[1]['body']['question_text'] == q
-            assert sq_call[1]['body']['question_type'] == "SAMPLE_QUESTION"
+            assert sq_call[1]['body']['curated_question']['question_text'] == q
+            assert sq_call[1]['body']['curated_question']['question_type'] == "SAMPLE_QUESTION"
 
     def test_instructions_truncated_to_5000(self):
         """Instructions exceeding 5000 chars should be truncated."""

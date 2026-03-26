@@ -80,7 +80,10 @@ def create_genie_space(
                 ws_client.api_client.do(
                     'POST',
                     f'/api/2.0/data-rooms/{space_id}/instructions',
-                    body={"instruction_text": instructions[:5000]},
+                    body={
+                        "title": "Product Context",
+                        "instruction_text": instructions[:5000],
+                    },
                 )
                 logger.info(f"Added instructions to Genie Space {space_id}")
             except Exception as e:
@@ -88,16 +91,23 @@ def create_genie_space(
 
         # Step 3: Add sample questions (if provided)
         if sample_questions:
+            added = 0
             for q in sample_questions:
                 try:
                     ws_client.api_client.do(
                         'POST',
                         f'/api/2.0/data-rooms/{space_id}/curated-questions',
-                        body={"question_text": q, "question_type": "SAMPLE_QUESTION"},
+                        body={
+                            "curated_question": {
+                                "question_text": q,
+                                "question_type": "SAMPLE_QUESTION",
+                            }
+                        },
                     )
+                    added += 1
                 except Exception as e:
                     logger.warning(f"Failed to add sample question to space {space_id}: {e}")
-            logger.info(f"Added {len(sample_questions)} sample questions to Genie Space {space_id}")
+            logger.info(f"Added {added}/{len(sample_questions)} sample questions to Genie Space {space_id}")
 
         workspace_url = ws_client.config.host.rstrip('/')
         space_url = f"{workspace_url}/genie/rooms/{space_id}"
