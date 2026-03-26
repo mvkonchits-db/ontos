@@ -40,7 +40,7 @@ interface GenieSpaceDialogProps {
 type DialogState = 'idle' | 'creating' | 'success' | 'error';
 
 export default function GenieSpaceDialog({ open, onOpenChange, products, onSuccess }: GenieSpaceDialogProps) {
-  const { post, get, del } = useApi();
+  const { post, get, delete: del } = useApi();
   const { toast } = useToast();
 
   const [state, setState] = useState<DialogState>('idle');
