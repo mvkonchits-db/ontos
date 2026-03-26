@@ -83,6 +83,7 @@ def create_genie_space(
                     body={
                         "title": "Product Context",
                         "content": instructions[:5000],
+                        "instruction_type": "TEXT_INSTRUCTION",
                     },
                 )
                 logger.info(f"Added instructions to Genie Space {space_id}")
