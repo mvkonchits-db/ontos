@@ -70,9 +70,9 @@ export default function GenieSpaceDialog({ open, onOpenChange, products, onSucce
     }
   }, [get]);
 
-  // Reset state when dialog opens
-  const handleOpenChange = useCallback((isOpen: boolean) => {
-    if (isOpen) {
+  // Fetch existing spaces when dialog opens
+  useEffect(() => {
+    if (open) {
       setState('idle');
       setErrorMessage('');
       setSpaceUrl(null);
@@ -85,8 +85,11 @@ export default function GenieSpaceDialog({ open, onOpenChange, products, onSucce
       setSelectedTables(new Set(tables));
       fetchExistingSpaces();
     }
+  }, [open, products, fetchExistingSpaces]);
+
+  const handleOpenChange = useCallback((isOpen: boolean) => {
     onOpenChange(isOpen);
-  }, [onOpenChange, products, fetchExistingSpaces]);
+  }, [onOpenChange]);
 
   const toggleTable = (key: string) => {
     setSelectedTables(prev => {

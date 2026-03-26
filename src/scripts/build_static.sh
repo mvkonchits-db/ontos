@@ -8,6 +8,9 @@ FRONTEND_DIR="$(cd "${SCRIPT_DIR}/../frontend" && pwd)"
 DEST_DIR="${BACKEND_DIR}/static"
 SRC_DIR="${FRONTEND_DIR}/static"
 
+echo "Clearing build caches..."
+rm -rf "${FRONTEND_DIR}/node_modules/.vite" "${FRONTEND_DIR}/static" "${DEST_DIR}"
+
 echo "Building frontend in ${FRONTEND_DIR}..."
 if command -v yarn >/dev/null 2>&1; then
   yarn --cwd "${FRONTEND_DIR}" install --frozen-lockfile
