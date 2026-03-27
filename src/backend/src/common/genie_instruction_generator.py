@@ -83,16 +83,16 @@ def generate_genie_config(
         product_sections.append(section)
         all_table_columns.update(table_cols)
 
-    # 3. Generate compact join notes per product section
-    join_notes = _build_compact_join_notes(all_table_columns)
-
-    # 4. Assemble instructions with priority-based truncation
+    # 3. Assemble text instructions WITHOUT joins (joins go as SQL instructions)
     instructions = _assemble_and_truncate(
         domain_sections=domain_sections,
         product_sections=product_sections,
-        join_notes=join_notes,
+        join_notes="",  # No join hints in text — they go as SQL instructions
         max_length=max_instruction_length,
     )
+
+    # 4. Generate explicit join SQL statements
+    join_sqls = _generate_join_sqls(all_table_columns)
 
     # 5. Generate sample questions with SQL from product + column context
     sample_questions = _generate_sample_questions(products, all_table_columns)
@@ -100,6 +100,7 @@ def generate_genie_config(
     return {
         'instructions': instructions,
         'sample_questions': sample_questions,
+        'join_sqls': join_sqls,
     }
 
 
@@ -338,6 +339,52 @@ def _build_join_section(
     lines = ["### Join Relationships"]
     lines.extend(join_hints)
     return "\n".join(lines)
+
+
+def _generate_join_sqls(
+    all_table_columns: Dict[str, List[Tuple[str, str]]]
+) -> List[Dict[str, str]]:
+    """Generate explicit SQL join statements as {title, sql} dicts.
+
+    These get added as SQL_INSTRUCTION type in Genie (shows in Joins section).
+    """
+    if len(all_table_columns) < 2:
+        return []
+
+    # Build reverse index: column_name -> set of FQNs
+    col_to_tables: Dict[str, Set[str]] = defaultdict(set)
+    for fqn, cols in all_table_columns.items():
+        for col_name, _ in cols:
+            col_to_tables[col_name].add(fqn)
+
+    joins = []
+    seen_pairs: Set[Tuple[str, str]] = set()
+
+    for col_name, fqns in sorted(col_to_tables.items()):
+        if len(fqns) < 2:
+            continue
+        # Only FK-style columns
+        if not (col_name == "id" or col_name.endswith("_id") or col_name.endswith("_key")):
+            continue
+
+        sorted_fqns = sorted(fqns)
+        for i in range(len(sorted_fqns)):
+            for j in range(i + 1, len(sorted_fqns)):
+                t1_fqn = sorted_fqns[i]
+                t2_fqn = sorted_fqns[j]
+                pair = (t1_fqn, t2_fqn)
+                if pair in seen_pairs:
+                    continue
+                seen_pairs.add(pair)
+
+                t1_short = t1_fqn.rsplit(".", 1)[-1]
+                t2_short = t2_fqn.rsplit(".", 1)[-1]
+                joins.append({
+                    "title": f"Join {t1_short} with {t2_short}",
+                    "sql": f"SELECT * FROM {t1_fqn} a JOIN {t2_fqn} b ON a.{col_name} = b.{col_name} LIMIT 10",
+                })
+
+    return joins
 
 
 def _generate_sample_questions(

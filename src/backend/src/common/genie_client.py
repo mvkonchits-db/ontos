@@ -22,15 +22,18 @@ def create_genie_space(
     warehouse_id: str,
     description: Optional[str] = None,
     instructions: Optional[str] = None,
-    sample_questions: Optional[List[str]] = None,
+    sample_questions: Optional[List] = None,
+    join_sqls: Optional[List[Dict[str, str]]] = None,
 ) -> Dict[str, Any]:
     """
     Create a Genie Space using the data-rooms REST API.
 
     Steps:
       1. POST /api/2.0/data-rooms/ with table_identifiers
-      2. POST instructions (if provided)
-      3. POST sample questions (if provided)
+      2. POST text instructions (domain context, tables)
+      3. POST SQL instructions for joins
+      4. POST SQL instructions for example queries
+      5. POST sample questions
 
     Args:
         ws_client: Databricks workspace client
@@ -74,7 +77,7 @@ def create_genie_space(
 
         logger.info(f"Created Genie Space: {space_id}")
 
-        # Step 2: Add instructions (if provided)
+        # Step 2: Add text instructions (product context, domain, tables)
         if instructions:
             try:
                 ws_client.api_client.do(
@@ -86,41 +89,74 @@ def create_genie_space(
                         "instruction_type": "TEXT_INSTRUCTION",
                     },
                 )
-                logger.info(f"Added instructions to Genie Space {space_id}")
+                logger.info(f"Added text instructions to Genie Space {space_id}")
             except Exception as e:
-                logger.warning(f"Failed to add instructions to space {space_id}: {e}")
+                logger.warning(f"Failed to add text instructions to space {space_id}: {e}")
 
-        # Step 3: Add sample questions with optional SQL (if provided)
-        if sample_questions:
-            added = 0
-            for q in sample_questions:
+        # Step 3: Add SQL instructions for joins
+        if join_sqls:
+            added_joins = 0
+            for j in join_sqls:
                 try:
-                    # q can be a string or dict {"question": "...", "sql": "..."}
-                    if isinstance(q, dict):
-                        question_text = q.get("question", "")
-                        sql = q.get("sql")
-                    else:
-                        question_text = str(q)
-                        sql = None
+                    ws_client.api_client.do(
+                        'POST',
+                        f'/api/2.0/data-rooms/{space_id}/instructions',
+                        body={
+                            "title": j.get("title", "Table Join"),
+                            "content": j.get("sql", ""),
+                            "instruction_type": "SQL_INSTRUCTION",
+                        },
+                    )
+                    added_joins += 1
+                except Exception as e:
+                    logger.warning(f"Failed to add join SQL to space {space_id}: {e}")
+            logger.info(f"Added {added_joins}/{len(join_sqls)} join SQL instructions to Genie Space {space_id}")
 
-                    payload = {
-                        "curated_question": {
-                            "question_text": question_text,
-                            "question_type": "SAMPLE_QUESTION",
-                        }
-                    }
-                    if sql:
-                        payload["curated_question"]["sql"] = sql
+        # Step 4: Add sample questions with SQL instructions
+        if sample_questions:
+            added_sq = 0
+            added_sql = 0
+            for q in sample_questions:
+                if isinstance(q, dict):
+                    question_text = q.get("question", "")
+                    sql = q.get("sql")
+                else:
+                    question_text = str(q)
+                    sql = None
 
+                # Add as sample question (always)
+                try:
                     ws_client.api_client.do(
                         'POST',
                         f'/api/2.0/data-rooms/{space_id}/curated-questions',
-                        body=payload,
+                        body={
+                            "curated_question": {
+                                "question_text": question_text,
+                                "question_type": "SAMPLE_QUESTION",
+                            }
+                        },
                     )
-                    added += 1
+                    added_sq += 1
                 except Exception as e:
                     logger.warning(f"Failed to add sample question to space {space_id}: {e}")
-            logger.info(f"Added {added}/{len(sample_questions)} sample questions to Genie Space {space_id}")
+
+                # Also add as SQL instruction (if SQL provided) — shows in SQL Queries section
+                if sql:
+                    try:
+                        ws_client.api_client.do(
+                            'POST',
+                            f'/api/2.0/data-rooms/{space_id}/instructions',
+                            body={
+                                "title": question_text,
+                                "content": sql,
+                                "instruction_type": "SQL_INSTRUCTION",
+                            },
+                        )
+                        added_sql += 1
+                    except Exception as e:
+                        logger.warning(f"Failed to add SQL instruction to space {space_id}: {e}")
+
+            logger.info(f"Added {added_sq} sample questions + {added_sql} SQL instructions to Genie Space {space_id}")
 
         workspace_url = ws_client.config.host.rstrip('/')
         space_url = f"{workspace_url}/genie/rooms/{space_id}"
