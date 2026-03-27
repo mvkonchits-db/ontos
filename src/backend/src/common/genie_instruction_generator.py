@@ -227,7 +227,7 @@ def _get_table_columns(fqn: str, ws_client) -> List[Tuple[str, str]]:
         table_info = ws_client.tables.get(full_name=fqn)
         if table_info and table_info.columns:
             return [
-                (col.name, col.type_name or "unknown")
+                (col.name, str(col.type_name or "unknown"))
                 for col in table_info.columns
             ]
     except Exception as e:
@@ -399,7 +399,7 @@ def _generate_sample_questions(
         # Q4: Aggregation if we detect numeric-looking columns
         if all_table_columns:
             cols = all_table_columns.get(first_fqn, [])
-            numeric_cols = [c for c, t in cols if t.lower() in ("double", "float", "long", "int", "decimal")]
+            numeric_cols = [c for c, t in cols if str(t).lower() in ("double", "float", "long", "int", "decimal")]
             group_cols = [c for c, t in cols if c in ("region", "status", "category", "asset_type", "priority", "maintenance_type")]
             if numeric_cols and group_cols:
                 num_col = numeric_cols[0]
