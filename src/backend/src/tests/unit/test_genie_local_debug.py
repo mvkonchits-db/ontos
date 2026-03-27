@@ -89,17 +89,9 @@ def test_full_genie_config_output(capsys):
             print(f"  (string): {q}")
     print("\n" + "=" * 60)
 
-    print("\n" + "=" * 60)
-    print(f"JOIN SQLS ({len(config.get('join_sqls', []))}):")
-    print("=" * 60)
-    for j in config.get("join_sqls", []):
-        print(f"  Title: {j.get('title')}")
-        print(f"  SQL:   {j.get('sql')}")
-    print()
-
-    # Assertions to ensure it works
+    # Assertions
     assert config["instructions"], "Instructions should not be empty"
+    assert "join on asset_id" in config["instructions"], "Join hints should be in instructions"
     assert len(config["sample_questions"]) > 0, "Should have at least one sample question"
     assert all(isinstance(q, dict) for q in config["sample_questions"]), "All questions should be dicts"
     assert all("question" in q for q in config["sample_questions"]), "All questions need 'question' key"
-    assert len(config.get("join_sqls", [])) > 0, "Should have at least one join SQL"

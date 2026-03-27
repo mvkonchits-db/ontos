@@ -1835,7 +1835,6 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 )
                 instructions = genie_config.get('instructions', '')
                 sample_questions = genie_config.get('sample_questions')
-                join_sqls = genie_config.get('join_sqls', [])
                 # Fallback to basic metadata if generator fails
                 if not instructions:
                     instructions = genie_client.format_metadata_for_genie(metadata_map, products)
@@ -1861,7 +1860,6 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                     description=f"Genie Space for {len(products)} Data Product(s)",
                     instructions=instructions,
                     sample_questions=sample_questions,
-                    join_sqls=join_sqls,
                 )
 
                 # Step 6: Persist to database

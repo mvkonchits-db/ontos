@@ -83,24 +83,25 @@ def generate_genie_config(
         product_sections.append(section)
         all_table_columns.update(table_cols)
 
-    # 3. Assemble text instructions WITHOUT joins (joins go as SQL instructions)
+    # 3. Build join notes (goes into description for Genie auto-discovery)
+    join_notes = _build_compact_join_notes(all_table_columns)
+
+    # 4. Assemble everything into a rich description
+    #    The description is the PRIMARY mechanism — Genie uses it for context,
+    #    join discovery, and SQL pattern generation.
     instructions = _assemble_and_truncate(
         domain_sections=domain_sections,
         product_sections=product_sections,
-        join_notes="",  # No join hints in text — they go as SQL instructions
+        join_notes=join_notes,
         max_length=max_instruction_length,
     )
 
-    # 4. Generate explicit join SQL statements
-    join_sqls = _generate_join_sqls(all_table_columns)
-
-    # 5. Generate sample questions with SQL from product + column context
+    # 5. Generate sample questions from product + column context
     sample_questions = _generate_sample_questions(products, all_table_columns)
 
     return {
         'instructions': instructions,
         'sample_questions': sample_questions,
-        'join_sqls': join_sqls,
     }
 
 

@@ -62,8 +62,8 @@ class TestCreateGenieSpace:
         assert body["run_as_type"] == "VIEWER"
         assert body["description"] == "A test space"
 
-    def test_adds_instructions_separately(self):
-        """Instructions should be posted to /instructions endpoint after space creation."""
+    def test_instructions_go_into_description(self):
+        """Instructions should be included in the description field."""
         mock_ws = MagicMock()
         mock_ws.config.host = "https://workspace.databricks.com"
         mock_ws.api_client.do.return_value = {"space_id": "space-abc-123"}
@@ -76,14 +76,10 @@ class TestCreateGenieSpace:
             instructions="Use this for testing",
         )
 
-        # Should have at least 2 calls: create space + add instructions
-        assert mock_ws.api_client.do.call_count >= 2
-
-        instructions_call = mock_ws.api_client.do.call_args_list[1]
-        assert instructions_call[0][0] == 'POST'
-        assert '/instructions' in instructions_call[0][1]
-        assert instructions_call[1]['body']['content'] == "Use this for testing"
-        assert instructions_call[1]['body']['title'] == "Product Context"
+        # Instructions go in the description of the create call
+        create_call = mock_ws.api_client.do.call_args_list[0]
+        body = create_call[1]['body']
+        assert "Use this for testing" in body["description"]
 
     def test_adds_sample_questions(self):
         """Sample questions should be posted to /curated-questions endpoint."""
@@ -110,8 +106,8 @@ class TestCreateGenieSpace:
             assert sq_call[1]['body']['curated_question']['question_text'] == q
             assert sq_call[1]['body']['curated_question']['question_type'] == "SAMPLE_QUESTION"
 
-    def test_instructions_truncated_to_5000(self):
-        """Instructions exceeding 5000 chars should be truncated."""
+    def test_description_truncated_to_4000(self):
+        """Description should not exceed 4000 chars."""
         mock_ws = MagicMock()
         mock_ws.config.host = "https://workspace.databricks.com"
         mock_ws.api_client.do.return_value = {"space_id": "space-abc-123"}
@@ -125,8 +121,8 @@ class TestCreateGenieSpace:
             instructions=long_text,
         )
 
-        instructions_call = mock_ws.api_client.do.call_args_list[1]
-        assert len(instructions_call[1]['body']['content']) == 5000
+        create_call = mock_ws.api_client.do.call_args_list[0]
+        assert len(create_call[1]['body']['description']) <= 4000
 
     def test_uses_id_fallback_for_space_id(self):
         """Should use 'id' field if 'space_id' is not in response."""

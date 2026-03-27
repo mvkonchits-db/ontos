@@ -58,6 +58,15 @@ def create_genie_space(
 
     logger.info(f"Creating Genie Space '{name}' with {len(datasets)} datasets on warehouse {warehouse_id}")
 
+    # Build rich description: the description field is the PRIMARY way to configure
+    # Genie's understanding of the data. Joins, SQL patterns, and business rules
+    # go here — Genie auto-discovers table relationships from this context.
+    full_description = description or ""
+    if instructions:
+        full_description = instructions[:4000]
+        if description:
+            full_description = f"{description}\n\n{instructions[:3500]}"
+
     # Step 1: Create space via data-rooms API
     payload = {
         "display_name": name,
@@ -65,8 +74,8 @@ def create_genie_space(
         "table_identifiers": datasets,
         "run_as_type": "VIEWER",
     }
-    if description:
-        payload["description"] = description
+    if full_description:
+        payload["description"] = full_description[:4000]
 
     try:
         result = ws_client.api_client.do('POST', '/api/2.0/data-rooms/', body=payload)
@@ -77,54 +86,11 @@ def create_genie_space(
 
         logger.info(f"Created Genie Space: {space_id}")
 
-        # Step 2: Add text instructions (product context, domain, tables)
-        if instructions:
-            try:
-                ws_client.api_client.do(
-                    'POST',
-                    f'/api/2.0/data-rooms/{space_id}/instructions',
-                    body={
-                        "title": "Product Context",
-                        "content": instructions[:5000],
-                        "instruction_type": "TEXT_INSTRUCTION",
-                    },
-                )
-                logger.info(f"Added text instructions to Genie Space {space_id}")
-            except Exception as e:
-                logger.warning(f"Failed to add text instructions to space {space_id}: {e}")
-
-        # Step 3: Add SQL instructions for joins
-        if join_sqls:
-            added_joins = 0
-            for j in join_sqls:
-                try:
-                    ws_client.api_client.do(
-                        'POST',
-                        f'/api/2.0/data-rooms/{space_id}/instructions',
-                        body={
-                            "title": j.get("title", "Table Join"),
-                            "content": j.get("sql", ""),
-                            "instruction_type": "SQL_INSTRUCTION",
-                        },
-                    )
-                    added_joins += 1
-                except Exception as e:
-                    logger.warning(f"Failed to add join SQL to space {space_id}: {e}")
-            logger.info(f"Added {added_joins}/{len(join_sqls)} join SQL instructions to Genie Space {space_id}")
-
-        # Step 4: Add sample questions with SQL instructions
+        # Step 2: Add sample questions
         if sample_questions:
-            added_sq = 0
-            added_sql = 0
+            added = 0
             for q in sample_questions:
-                if isinstance(q, dict):
-                    question_text = q.get("question", "")
-                    sql = q.get("sql")
-                else:
-                    question_text = str(q)
-                    sql = None
-
-                # Add as sample question (always)
+                question_text = q.get("question", str(q)) if isinstance(q, dict) else str(q)
                 try:
                     ws_client.api_client.do(
                         'POST',
@@ -136,27 +102,10 @@ def create_genie_space(
                             }
                         },
                     )
-                    added_sq += 1
+                    added += 1
                 except Exception as e:
                     logger.warning(f"Failed to add sample question to space {space_id}: {e}")
-
-                # Also add as SQL instruction (if SQL provided) — shows in SQL Queries section
-                if sql:
-                    try:
-                        ws_client.api_client.do(
-                            'POST',
-                            f'/api/2.0/data-rooms/{space_id}/instructions',
-                            body={
-                                "title": question_text,
-                                "content": sql,
-                                "instruction_type": "SQL_INSTRUCTION",
-                            },
-                        )
-                        added_sql += 1
-                    except Exception as e:
-                        logger.warning(f"Failed to add SQL instruction to space {space_id}: {e}")
-
-            logger.info(f"Added {added_sq} sample questions + {added_sql} SQL instructions to Genie Space {space_id}")
+            logger.info(f"Added {added}/{len(sample_questions)} sample questions to Genie Space {space_id}")
 
         workspace_url = ws_client.config.host.rstrip('/')
         space_url = f"{workspace_url}/genie/rooms/{space_id}"
