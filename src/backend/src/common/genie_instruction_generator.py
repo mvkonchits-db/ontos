@@ -94,8 +94,8 @@ def generate_genie_config(
         max_length=max_instruction_length,
     )
 
-    # 5. Generate sample questions from product context
-    sample_questions = _generate_sample_questions(products)
+    # 5. Generate sample questions with SQL from product + column context
+    sample_questions = _generate_sample_questions(products, all_table_columns)
 
     return {
         'instructions': instructions,
@@ -272,12 +272,22 @@ def _build_compact_join_notes(
         for col_name, _ in cols:
             col_to_tables[col_name].add(fqn)
 
-    # Find columns present in 2+ tables (skip generic ones like "id")
-    skip_cols = {"id", "created_at", "updated_at", "created_by", "updated_by"}
+    # Only keep columns that look like real join keys (ending in _id, _key, _code)
+    # or are exact matches like "id". Skip all other shared columns.
+    skip_cols = {"created_at", "updated_at", "created_by", "updated_by"}
     join_hints = []
 
     for col_name, fqns in sorted(col_to_tables.items()):
         if col_name in skip_cols or len(fqns) < 2:
+            continue
+        # Only keep FK-style columns
+        is_join_key = (
+            col_name == "id"
+            or col_name.endswith("_id")
+            or col_name.endswith("_key")
+            or col_name.endswith("_code")
+        )
+        if not is_join_key:
             continue
         short_names = sorted(fqn.rsplit(".", 1)[-1] for fqn in fqns)
         join_hints.append(f"- {' & '.join(short_names)}: join on {col_name}")
@@ -330,33 +340,75 @@ def _build_join_section(
     return "\n".join(lines)
 
 
-def _generate_sample_questions(products) -> List[str]:
-    """Generate 3-5 sample questions from product context.
+def _generate_sample_questions(
+    products, all_table_columns: Optional[Dict[str, List[Tuple[str, str]]]] = None
+) -> List[Dict[str, str]]:
+    """Generate sample questions with optional SQL examples.
 
-    Creates relevant natural-language questions based on product names,
-    table names, and domain context.
+    Returns list of dicts: [{"question": "...", "sql": "..."}, ...]
+    SQL is included when we can derive it from table/column metadata.
     """
-    questions = []
+    questions: List[Dict[str, str]] = []
 
     for product in products:
-        product_label = product.name.lower()
-
-        # Get table short names from output ports
-        table_names = []
+        # Get table FQNs and short names
+        tables = []
         for port in (product.output_ports or []):
             if port.asset_type in ("table", "view") and port.asset_identifier:
-                short = port.asset_identifier.rsplit(".", 1)[-1] if "." in port.asset_identifier else port.asset_identifier
-                table_names.append(short)
+                fqn = port.asset_identifier
+                short = fqn.rsplit(".", 1)[-1] if "." in fqn else fqn
+                tables.append((fqn, short, port.description or ""))
 
-        if table_names:
-            first_table = table_names[0]
-            questions.append(f"Show me the top 10 records from {first_table}")
-            if len(table_names) > 1:
-                questions.append(f"How many records are in each of the {product_label} tables?")
+        if not tables:
+            continue
 
-        questions.append(f"What are the key trends in {product_label}?")
+        first_fqn, first_short, first_desc = tables[0]
 
-    # Cap at 5 questions
+        # Q1: Overview of first table
+        questions.append({
+            "question": f"Show me the first 10 rows from {first_short}",
+            "sql": f"SELECT * FROM {first_fqn} LIMIT 10",
+        })
+
+        # Q2: Count per table
+        if len(tables) > 1:
+            union_parts = " UNION ALL ".join(
+                f"SELECT '{short}' AS table_name, COUNT(*) AS row_count FROM {fqn}"
+                for fqn, short, _ in tables
+            )
+            questions.append({
+                "question": f"How many records are in each table?",
+                "sql": union_parts,
+            })
+
+        # Q3: Join query if we have column metadata and shared _id columns
+        if all_table_columns and len(tables) >= 2:
+            # Find a shared _id column between first two tables
+            cols1 = {c for c, _ in all_table_columns.get(tables[0][0], [])}
+            cols2 = {c for c, _ in all_table_columns.get(tables[1][0], [])}
+            shared_ids = [c for c in cols1 & cols2 if c.endswith("_id")]
+            if shared_ids:
+                join_col = shared_ids[0]
+                t1_fqn, t1_short, _ = tables[0]
+                t2_fqn, t2_short, _ = tables[1]
+                questions.append({
+                    "question": f"Join {t1_short} with {t2_short} and show the first 10 results",
+                    "sql": f"SELECT * FROM {t1_fqn} a JOIN {t2_fqn} b ON a.{join_col} = b.{join_col} LIMIT 10",
+                })
+
+        # Q4: Aggregation if we detect numeric-looking columns
+        if all_table_columns:
+            cols = all_table_columns.get(first_fqn, [])
+            numeric_cols = [c for c, t in cols if t.lower() in ("double", "float", "long", "int", "decimal")]
+            group_cols = [c for c, t in cols if c in ("region", "status", "category", "asset_type", "priority", "maintenance_type")]
+            if numeric_cols and group_cols:
+                num_col = numeric_cols[0]
+                grp_col = group_cols[0]
+                questions.append({
+                    "question": f"What is the average {num_col} by {grp_col}?",
+                    "sql": f"SELECT {grp_col}, AVG({num_col}) AS avg_{num_col} FROM {first_fqn} GROUP BY {grp_col} ORDER BY avg_{num_col} DESC",
+                })
+
     return questions[:5]
 
 

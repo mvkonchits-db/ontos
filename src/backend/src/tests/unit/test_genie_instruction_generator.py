@@ -144,9 +144,11 @@ class TestGenerateGenieConfig:
         mock_repo.get.return_value = product
 
         result = generate_genie_config(product_ids=["p1"], db=MagicMock())
-        questions_text = " ".join(result['sample_questions'])
+        questions = result['sample_questions']
+        # Questions are now dicts with 'question' and optional 'sql'
+        all_text = " ".join(q.get("question", "") + " " + q.get("sql", "") for q in questions)
 
-        assert "gold_health" in questions_text
+        assert "gold_health" in all_text
 
     @patch("src.repositories.data_products_repository.data_product_repo")
     def test_sample_questions_capped_at_five(self, mock_repo):

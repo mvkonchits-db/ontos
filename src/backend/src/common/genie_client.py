@@ -90,20 +90,32 @@ def create_genie_space(
             except Exception as e:
                 logger.warning(f"Failed to add instructions to space {space_id}: {e}")
 
-        # Step 3: Add sample questions (if provided)
+        # Step 3: Add sample questions with optional SQL (if provided)
         if sample_questions:
             added = 0
             for q in sample_questions:
                 try:
+                    # q can be a string or dict {"question": "...", "sql": "..."}
+                    if isinstance(q, dict):
+                        question_text = q.get("question", "")
+                        sql = q.get("sql")
+                    else:
+                        question_text = str(q)
+                        sql = None
+
+                    payload = {
+                        "curated_question": {
+                            "question_text": question_text,
+                            "question_type": "SAMPLE_QUESTION",
+                        }
+                    }
+                    if sql:
+                        payload["curated_question"]["sql"] = sql
+
                     ws_client.api_client.do(
                         'POST',
                         f'/api/2.0/data-rooms/{space_id}/curated-questions',
-                        body={
-                            "curated_question": {
-                                "question_text": q,
-                                "question_type": "SAMPLE_QUESTION",
-                            }
-                        },
+                        body=payload,
                     )
                     added += 1
                 except Exception as e:
