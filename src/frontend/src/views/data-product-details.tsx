@@ -48,6 +48,7 @@ import { AssetSelector } from '@/components/common/asset-selector';
 import { EntityTreePanel } from '@/components/common/entity-tree-panel';
 import { BusinessLineageView } from '@/components/lineage';
 import { ReadinessChecklist } from '@/components/data-products/readiness-checklist';
+import GenieSpaceDialog from '@/components/data-products/genie-space-dialog';
 import { LineageEditor } from '@/components/common/lineage-editor';
 import { useCopilotContext } from '@/hooks/use-copilot-context';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -258,6 +259,7 @@ export default function DataProductDetails() {
   const [isSupportChannelDialogOpen, setIsSupportChannelDialogOpen] = useState(false);
   const [isImportExportDialogOpen, setIsImportExportDialogOpen] = useState(false);
   const [isImportTeamMembersOpen, setIsImportTeamMembersOpen] = useState(false);
+  const [isGenieDialogOpen, setIsGenieDialogOpen] = useState(false);
 
   // Editing state for nested entities
   const [editingInputPortIndex, setEditingInputPortIndex] = useState<number | null>(null);
@@ -1156,20 +1158,9 @@ export default function DataProductDetails() {
     }
   };
 
-  const handleCreateGenieSpace = async () => {
+  const handleCreateGenieSpace = () => {
     if (!canWrite || !productId || !product) return;
-    if (!confirm(`Create a Genie Space for "${product.name}"?`)) return;
-
-    toast({ title: 'Initiating Genie Space', description: `Requesting Genie Space creation...` });
-
-    try {
-      const response = await post('/api/data-products/genie-space', { product_ids: [productId] });
-      if (response.error) throw new Error(response.error);
-      toast({ title: 'Request Submitted', description: `Genie Space creation initiated.` });
-      refreshNotifications();
-    } catch (err: any) {
-      toast({ title: 'Error', description: err.message || 'Failed to start Genie Space creation.', variant: 'destructive' });
-    }
+    setIsGenieDialogOpen(true);
   };
 
   const handleCreateNewVersion = () => {
@@ -2297,6 +2288,23 @@ export default function DataProductDetails() {
         isSubmitting={lifecycleActionSubmitting}
         onConfirm={handleDirectPublish}
       />
+      {/* Genie Space Creation Dialog */}
+      {product && (
+        <GenieSpaceDialog
+          open={isGenieDialogOpen}
+          onOpenChange={setIsGenieDialogOpen}
+          products={[{
+            id: productId!,
+            name: product.name,
+            outputPorts: (product.outputPorts || []).map(port => ({
+              name: port.name,
+              assetType: port.assetType,
+              assetIdentifier: port.assetIdentifier,
+            })),
+          }]}
+          onSuccess={() => refreshNotifications()}
+        />
+      )}
     </div>
   );
 }

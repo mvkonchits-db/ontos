@@ -646,7 +646,7 @@ class CatalogCommanderManager:
         return schema
 
     def _map_to_odcs_logical_type(self, databricks_type: str) -> str:
-        """Map Databricks data types to ODCS logical types.
+        """Map Databricks data types to ODCS v3.0.2 logical types.
 
         Args:
             databricks_type: The Databricks data type (e.g., 'int', 'bigint', 'varchar(255)')

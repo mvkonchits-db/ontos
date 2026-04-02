@@ -22,7 +22,7 @@ class DataContractDb(Base):
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     name = Column(String, nullable=False, index=True)  # Required for app usability
     kind = Column(String, nullable=False, default="DataContract")
-    api_version = Column(String, nullable=False, default="v3.1.0")
+    api_version = Column(String, nullable=False, default="v3.0.2")
     version = Column(String, nullable=False, index=True)
     status = Column(String, nullable=False, default="draft", index=True)
     # Deprecated: legacy marketplace flag; use publication_scope. Column retained for DB compatibility.
@@ -40,7 +40,7 @@ class DataContractDb(Base):
     description_purpose = Column(Text, nullable=True)
     description_limitations = Column(Text, nullable=True)
 
-    # ODCS additional top-level fields
+    # ODCS v3.0.2 additional top-level fields
     sla_default_element = Column(String, nullable=True)  # ODCS slaDefaultElement field
     contract_created_ts = Column(DateTime(timezone=True), nullable=True)  # ODCS contractCreatedTs field
 
@@ -187,7 +187,7 @@ class DataContractPricingDb(Base):
 
 
 class DataContractAuthoritativeDefinitionDb(Base):
-    """ODCS contract-level authoritative definitions"""
+    """ODCS v3.0.2 contract-level authoritative definitions"""
     __tablename__ = "data_contract_authoritative_definitions"
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     contract_id = Column(String, ForeignKey("data_contracts.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -230,7 +230,7 @@ class SchemaObjectDb(Base):
     physical_name = Column(String, nullable=True)
     data_granularity_description = Column(Text, nullable=True)
 
-    # ODCS additional schema object fields
+    # ODCS v3.0.2 additional schema object fields
     business_name = Column(String, nullable=True)  # ODCS businessName field
     physical_type = Column(String, nullable=True)  # ODCS physicalType field (table, view, etc.)
     tags = Column(Text, nullable=True)  # ODCS schema-level tags (JSON array stored as text)
@@ -401,7 +401,7 @@ class DataContractCommentDb(Base):
 
 
 class SchemaObjectAuthoritativeDefinitionDb(Base):
-    """ODCS schema-level authoritative definitions"""
+    """ODCS v3.0.2 schema-level authoritative definitions"""
     __tablename__ = "data_contract_schema_object_authoritative_definitions"
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     schema_object_id = Column(String, ForeignKey("data_contract_schema_objects.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -411,7 +411,7 @@ class SchemaObjectAuthoritativeDefinitionDb(Base):
 
 
 class SchemaObjectCustomPropertyDb(Base):
-    """ODCS schema-level custom properties"""
+    """ODCS v3.0.2 schema-level custom properties"""
     __tablename__ = "data_contract_schema_object_custom_properties"
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     schema_object_id = Column(String, ForeignKey("data_contract_schema_objects.id", ondelete="CASCADE"), nullable=False, index=True)
@@ -421,7 +421,7 @@ class SchemaObjectCustomPropertyDb(Base):
 
 
 class SchemaPropertyAuthoritativeDefinitionDb(Base):
-    """ODCS property-level authoritative definitions"""
+    """ODCS v3.0.2 property-level authoritative definitions"""
     __tablename__ = "data_contract_schema_property_authoritative_definitions"
     id = Column(String, primary_key=True, default=lambda: str(uuid4()))
     property_id = Column(String, ForeignKey("data_contract_schema_properties.id", ondelete="CASCADE"), nullable=False, index=True)

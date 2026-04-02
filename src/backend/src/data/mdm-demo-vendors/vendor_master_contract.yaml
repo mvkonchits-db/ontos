@@ -7,7 +7,7 @@
 
 id: mdm-demo-vendor-master-001
 version: '1.0.0'
-apiVersion: v3.1.0
+apiVersion: v3.0.2
 kind: DataContract
 name: Vendor Master Contract (SAP)
 status: active

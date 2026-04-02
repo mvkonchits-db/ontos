@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import * as dagre from 'dagre';
 import type { InstanceHierarchyNode } from '@/types/ontology-schema';
-import { useFormatLabel } from '@/lib/format-label';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Table2, Eye, Columns2, LayoutDashboard, Globe, FileCode, Brain, Activity,
@@ -134,7 +133,6 @@ function flattenHierarchy(
   root: InstanceHierarchyNode,
   navigate: (path: string) => void,
   isDark: boolean,
-  formatLabel: (s: string | null | undefined) => string,
 ): FlattenResult {
   const nodes: Node<HierarchyNodeData>[] = [];
   const edges: Edge[] = [];
@@ -164,7 +162,7 @@ function flattenHierarchy(
     });
 
     if (parentKey) {
-      const edgeLabel = formatLabel(node.relationship_label || node.relationship_type) || '';
+      const edgeLabel = node.relationship_label || node.relationship_type || '';
       edges.push({
         id: `e-${parentKey}-${key}`,
         source: parentKey,
@@ -230,13 +228,12 @@ interface HierarchyGraphViewProps {
 export function HierarchyGraphView({ rootNode, className }: HierarchyGraphViewProps) {
   const navigate = useNavigate();
   const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-  const formatLabel = useFormatLabel();
 
   const { layoutedNodes, layoutedEdges } = useMemo(() => {
-    const { nodes, edges } = flattenHierarchy(rootNode, navigate, isDark, formatLabel);
+    const { nodes, edges } = flattenHierarchy(rootNode, navigate, isDark);
     const laid = applyDagreLayout(nodes, edges, 'TB');
     return { layoutedNodes: laid, layoutedEdges: edges };
-  }, [rootNode, navigate, isDark, formatLabel]);
+  }, [rootNode, navigate, isDark]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);

@@ -43,6 +43,10 @@ class DeliveryChangeType(str, Enum):
     PRODUCT_CREATE = "product_create"    # Create data product
     PRODUCT_UPDATE = "product_update"    # Update data product
     PRODUCT_DELETE = "product_delete"    # Delete data product
+    # Datasets
+    DATASET_CREATE = "dataset_create"    # Create dataset
+    DATASET_UPDATE = "dataset_update"    # Update dataset
+    DATASET_DELETE = "dataset_delete"    # Delete dataset
     # Data Domains
     DOMAIN_CREATE = "domain_create"      # Create data domain
     DOMAIN_UPDATE = "domain_update"      # Update data domain
@@ -477,6 +481,7 @@ class DeliveryService:
             DeliveryChangeType.TAG_REMOVE: f"Remove Tag: {payload.entity_type}",
             DeliveryChangeType.CONTRACT_UPDATE: "Update Data Contract",
             DeliveryChangeType.PRODUCT_UPDATE: "Update Data Product",
+            DeliveryChangeType.DATASET_UPDATE: "Update Dataset",
             DeliveryChangeType.ROLE_UPDATE: "Update Role Permissions",
         }
         return titles.get(payload.change_type, f"Action Required: {payload.change_type.value}")

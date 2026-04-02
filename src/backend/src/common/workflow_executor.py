@@ -1042,8 +1042,8 @@ class CreateAssetReviewStepHandler(StepHandler):
                 # Build FQN based on entity - check both context.entity and trigger context entity_data
                 entity_data = tc.entity_data if tc and tc.entity_data else {}
                 
-                if entity_type in ['asset', 'table', 'view']:
-                    # For assets/tables/views, try to get fqn from entity data
+                if entity_type in ['dataset', 'table', 'view']:
+                    # For datasets, try to get fqn from entity data
                     fqn = (context.entity.get('fqn') or context.entity.get('table_fqn') or 
                            entity_data.get('fqn') or entity_data.get('table_fqn') or 
                            entity_name or entity_id)
@@ -1574,9 +1574,9 @@ class EntityActionStepHandler(StepHandler):
         elif entity_type in ('data_contract', 'DataContract'):
             from src.repositories.data_contracts_repository import data_contract_repo
             return data_contract_repo.get(db=self._db, id=entity_id), 'data_contract'
-        elif entity_type in ('asset', 'Asset', 'dataset', 'Dataset'):
-            from src.repositories.assets_repository import asset_repo
-            return asset_repo.get(db=self._db, id=entity_id), 'asset'
+        elif entity_type in ('dataset', 'Dataset'):
+            from src.repositories.datasets_repository import dataset_repo
+            return dataset_repo.get(db=self._db, id=entity_id), 'dataset'
         return None, entity_type
 
     def _handle_certification(self, action: str, entity_type: str, entity_id: str, context: StepContext) -> StepResult:
@@ -2039,7 +2039,7 @@ class WorkflowExecutor:
         """Handle entity status updates when a workflow completes.
         
         Based on the trigger type and entity type, update the entity's status
-        to reflect the workflow outcome (e.g., asset -> "active" on approval).
+        to reflect the workflow outcome (e.g., dataset -> "active" on approval).
         """
         if not trigger_context:
             return
@@ -2052,17 +2052,18 @@ class WorkflowExecutor:
             return
         
         try:
-            # Handle asset review completion (covers former dataset reviews)
-            if entity_type in ('asset', 'dataset') and trigger_type in ('on_request_review', 'ON_REQUEST_REVIEW'):
-                from src.repositories.assets_repository import asset_repo
-                db_asset = asset_repo.get(db=self._db, id=entity_id)
-                if db_asset:
+            # Handle dataset review completion
+            if entity_type == 'dataset' and trigger_type in ('on_request_review', 'ON_REQUEST_REVIEW'):
+                from src.repositories.datasets_repository import dataset_repo
+                db_dataset = dataset_repo.get(db=self._db, id=entity_id)
+                if db_dataset:
                     if succeeded:
-                        db_asset.status = 'active'
-                        logger.info(f"Asset {entity_id} status updated to 'active' after review approval")
+                        db_dataset.status = 'active'
+                        logger.info(f"Dataset {entity_id} status updated to 'active' after review approval")
                     else:
-                        db_asset.status = 'draft'
-                        logger.info(f"Asset {entity_id} status reverted to 'draft' after review rejection")
+                        # Revert to draft on rejection
+                        db_dataset.status = 'draft'
+                        logger.info(f"Dataset {entity_id} status reverted to 'draft' after review rejection")
                     self._db.commit()
                     
             # Handle data contract deploy completion

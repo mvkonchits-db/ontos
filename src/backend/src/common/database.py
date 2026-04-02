@@ -66,11 +66,15 @@ _token_refresh_stop_event = threading.Event()
 
 def get_lakebase_instance_name(app_name: str, ws_client) -> Optional[str]:
     """Get the Lakebase instance name from the Databricks App resources.
-    
+
+    Supports both resource types:
+      - Provisioned Lakebase: resource.database.instance_name
+      - Autoscale Lakebase (postgres): resource.postgres.branch → extract project name
+
     Args:
         app_name: Name of the Databricks App
         ws_client: Workspace client instance
-        
+
     Returns:
         The database instance name, or None if not found
     """
@@ -78,8 +82,18 @@ def get_lakebase_instance_name(app_name: str, ws_client) -> Optional[str]:
         app_info = ws_client.apps.get(app_name)
         if app_info.resources:
             for resource in app_info.resources:
-                if resource.database is not None:
+                # Provisioned Lakebase (classic)
+                if hasattr(resource, 'database') and resource.database is not None:
                     return resource.database.instance_name
+                # Autoscale Lakebase (postgres) — branch path: "projects/<name>/branches/production"
+                if hasattr(resource, 'postgres') and resource.postgres is not None:
+                    branch_path = getattr(resource.postgres, 'branch', '') or ''
+                    if branch_path.startswith('projects/'):
+                        # Extract instance name from "projects/<name>/branches/..."
+                        parts = branch_path.split('/')
+                        if len(parts) >= 2:
+                            return parts[1]
+                    logger.info(f"Found postgres resource with branch: {branch_path}")
     except Exception as e:
         logger.error(f"Failed to get instance name for app {app_name}: {e}")
     return None

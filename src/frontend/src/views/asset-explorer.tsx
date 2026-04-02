@@ -20,7 +20,6 @@ import { AssetFormDialog } from '@/components/common/asset-form-dialog';
 import EntityInfoDialog from '@/components/metadata/entity-info-dialog';
 import AssetImportExportDialog from '@/components/assets/asset-import-export-dialog';
 import { AssetDeleteDialog } from '@/components/assets/asset-delete-dialog';
-import { useTranslation } from 'react-i18next';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
 import { RelativeDate } from '@/components/common/relative-date';
@@ -83,7 +82,6 @@ export default function AssetExplorerView() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { get: apiGet, delete: apiDelete, loading: apiIsLoading } = useApi();
   const { toast } = useToast();
-  const { i18n } = useTranslation();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
@@ -159,7 +157,7 @@ export default function AssetExplorerView() {
 
   const fetchOntologyTypes = useCallback(async () => {
     try {
-      const response = await apiGet<EntityTypeDefinition[]>(`/api/ontology/entity-types?tier=asset&lang=${encodeURIComponent(i18n.language)}`);
+      const response = await apiGet<EntityTypeDefinition[]>('/api/ontology/entity-types?tier=asset');
       if (!response.error && Array.isArray(response.data)) {
         setOntologyTypes(response.data);
       }

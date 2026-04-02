@@ -23,8 +23,6 @@ export interface ImportRequest {
   selected_paths: string[];
   depth: ImportDepth;
   dry_run?: boolean;
-  excluded_paths?: string[];
-  path_mappings?: Record<string, string>;
 }
 
 export interface ImportPreviewItem {
@@ -34,7 +32,6 @@ export interface ImportPreviewItem {
   will_create: boolean;
   existing_asset_id: string | null;
   parent_path: string | null;
-  is_ancestor: boolean;
 }
 
 export interface ImportResultItem {

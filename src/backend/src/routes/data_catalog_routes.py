@@ -23,6 +23,7 @@ from src.common.workspace_client import get_obo_workspace_client
 from src.common.config import get_settings, Settings
 from src.common.dependencies import DBSessionDep
 from src.controller.data_catalog_manager import DataCatalogManager
+from src.controller.datasets_manager import DatasetsManager
 from src.controller.data_contracts_manager import DataContractsManager
 from src.models.data_catalog import (
     DataDictionaryResponse,
@@ -52,11 +53,15 @@ def get_data_catalog_manager(
     Does NOT scan the entire Unity Catalog.
     """
     settings = getattr(request.app.state, 'settings', None)
+    
+    # Get managers from app state
+    datasets_manager = getattr(request.app.state, 'datasets_manager', None)
     contracts_manager = getattr(request.app.state, 'data_contracts_manager', None)
     
     return DataCatalogManager(
         obo_client=obo_client,
         db_session=db,
+        datasets_manager=datasets_manager,
         contracts_manager=contracts_manager,
         settings=settings
     )
@@ -69,11 +74,13 @@ def get_data_catalog_manager(
 def _get_manager(request: Request, db: DBSessionDep, obo_client: WorkspaceClient = Depends(get_obo_workspace_client)) -> DataCatalogManager:
     """Helper to create manager with all dependencies."""
     settings = getattr(request.app.state, 'settings', None)
+    datasets_manager = getattr(request.app.state, 'datasets_manager', None)
     contracts_manager = getattr(request.app.state, 'data_contracts_manager', None)
     
     return DataCatalogManager(
         obo_client=obo_client,
         db_session=db,
+        datasets_manager=datasets_manager,
         contracts_manager=contracts_manager,
         settings=settings
     )

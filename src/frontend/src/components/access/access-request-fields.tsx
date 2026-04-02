@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export interface AccessRequestFieldsProps {
-  entityType: 'data_product' | 'data_contract';
+  entityType: 'data_product' | 'dataset' | 'data_contract';
   message: string;
   onMessageChange: (value: string) => void;
   selectedDuration: number;

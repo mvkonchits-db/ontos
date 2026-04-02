@@ -110,6 +110,29 @@ asset_types:
         priority: 2
         boost: 1.5
 
+  dataset:
+    enabled: true
+    inherit_defaults: true
+    extra_fields:
+      environment:
+        indexed: true
+        source: "environment"
+        match_type: exact
+        priority: 4
+        boost: 1.0
+      asset_type:
+        indexed: true
+        source: "asset_type"
+        match_type: exact
+        priority: 5
+        boost: 0.8
+      status:
+        indexed: true
+        source: "status"
+        match_type: exact
+        priority: 6
+        boost: 0.7
+
   data-asset-review:
     enabled: true
     inherit_defaults: true

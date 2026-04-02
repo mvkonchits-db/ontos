@@ -10,7 +10,7 @@ import { useApi } from '@/hooks/use-api';
 import { useNotificationsStore } from '@/stores/notifications-store';
 import { Loader2, FileText, Package, AlertCircle, Clock, Database, Table2 } from 'lucide-react';
 
-type EntityType = 'data_product' | 'data_contract' | 'table' | 'schema' | 'catalog';
+type EntityType = 'data_product' | 'data_contract' | 'dataset' | 'table' | 'schema' | 'catalog';
 type PermissionLevel = 'READ' | 'WRITE' | 'MANAGE';
 
 interface DurationConfig {

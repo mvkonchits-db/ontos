@@ -43,9 +43,9 @@ class SemanticLinksManager:
                 ).fetchone()
                 return result[0] if result else None
 
-            elif entity_type in ("dataset", "asset"):
+            elif entity_type == "dataset":
                 result = self._db.execute(
-                    text("SELECT name FROM assets WHERE id = :entity_id"),
+                    text("SELECT name FROM datasets WHERE id = :entity_id"),
                     {"entity_id": entity_id}
                 ).fetchone()
                 return result[0] if result else None

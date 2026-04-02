@@ -24,8 +24,8 @@
 # ============================================================================
 
 ontos: a owl:Ontology ;
-    rdfs:label "Ontos Application Ontology"@en ;
-    rdfs:comment "Prescriptive vocabulary for Ontos data governance entities, relationships, and UI rendering"@en ;
+    rdfs:label "Ontos Application Ontology" ;
+    rdfs:comment "Prescriptive vocabulary for Ontos data governance entities, relationships, and UI rendering" ;
     owl:versionInfo "2.0.0" ;
     owl:imports odcs: ;
     dc:created "2024-09-22" ;
@@ -45,87 +45,87 @@ ontos: a owl:Ontology ;
 # --- Class-level UI annotations ---
 
 ontos:modelTier a owl:AnnotationProperty ;
-    rdfs:label "model tier"@en ;
-    rdfs:comment "Implementation tier: 'dedicated' (own SQL tables) or 'asset' (AssetDb + AssetTypeDb)"@en ;
+    rdfs:label "model tier" ;
+    rdfs:comment "Implementation tier: 'dedicated' (own SQL tables) or 'asset' (AssetDb + AssetTypeDb)" ;
     rdfs:range xsd:string .
 
 ontos:uiIcon a owl:AnnotationProperty ;
-    rdfs:label "UI icon"@en ;
-    rdfs:comment "Lucide icon name for display in the application UI"@en ;
+    rdfs:label "UI icon" ;
+    rdfs:comment "Lucide icon name for display in the application UI" ;
     rdfs:range xsd:string .
 
 ontos:uiCategory a owl:AnnotationProperty ;
-    rdfs:label "UI category"@en ;
-    rdfs:comment "Grouping category: data, governance, analytics, integration, system"@en ;
+    rdfs:label "UI category" ;
+    rdfs:comment "Grouping category: data, governance, analytics, integration, system" ;
     rdfs:range xsd:string .
 
 ontos:uiDisplayOrder a owl:AnnotationProperty ;
-    rdfs:label "UI display order"@en ;
-    rdfs:comment "Sort order within its category (lower = first)"@en ;
+    rdfs:label "UI display order" ;
+    rdfs:comment "Sort order within its category (lower = first)" ;
     rdfs:range xsd:integer .
 
 ontos:uiPersonaVisibility a owl:AnnotationProperty ;
-    rdfs:label "UI persona visibility"@en ;
-    rdfs:comment "Comma-separated persona IDs that can see this type (e.g. 'producer,steward,consumer,admin')"@en ;
+    rdfs:label "UI persona visibility" ;
+    rdfs:comment "Comma-separated persona IDs that can see this type (e.g. 'producer,steward,consumer,admin')" ;
     rdfs:range xsd:string .
 
 ontos:uiDetailSections a owl:AnnotationProperty ;
-    rdfs:label "UI detail sections"@en ;
-    rdfs:comment "JSON array of section configs for the entity detail page"@en ;
+    rdfs:label "UI detail sections" ;
+    rdfs:comment "JSON array of section configs for the entity detail page" ;
     rdfs:range xsd:string .
 
 # --- Field-level UI annotations (on data properties) ---
 
 ontos:uiFieldType a owl:AnnotationProperty ;
-    rdfs:label "UI field type"@en ;
-    rdfs:comment "Form field widget: text, textarea, select, multiselect, date, boolean, json, number, url"@en ;
+    rdfs:label "UI field type" ;
+    rdfs:comment "Form field widget: text, textarea, select, multiselect, date, boolean, json, number, url" ;
     rdfs:range xsd:string .
 
 ontos:uiFieldOrder a owl:AnnotationProperty ;
-    rdfs:label "UI field order"@en ;
-    rdfs:comment "Display order within a form group (lower = first)"@en ;
+    rdfs:label "UI field order" ;
+    rdfs:comment "Display order within a form group (lower = first)" ;
     rdfs:range xsd:integer .
 
 ontos:isRequired a owl:AnnotationProperty ;
-    rdfs:label "is required"@en ;
-    rdfs:comment "Whether this field is required for create/update"@en ;
+    rdfs:label "is required" ;
+    rdfs:comment "Whether this field is required for create/update" ;
     rdfs:range xsd:boolean .
 
 ontos:uiFieldGroup a owl:AnnotationProperty ;
-    rdfs:label "UI field group"@en ;
-    rdfs:comment "Logical form section: basic, governance, technical, metadata"@en ;
+    rdfs:label "UI field group" ;
+    rdfs:comment "Logical form section: basic, governance, technical, metadata" ;
     rdfs:range xsd:string .
 
 ontos:uiSelectOptions a owl:AnnotationProperty ;
-    rdfs:label "UI select options"@en ;
-    rdfs:comment "Comma-separated allowed values for select/multiselect fields"@en ;
+    rdfs:label "UI select options" ;
+    rdfs:comment "Comma-separated allowed values for select/multiselect fields" ;
     rdfs:range xsd:string .
 
 # --- Relationship-level UI annotations (on object properties) ---
 
 ontos:uiLabel a owl:AnnotationProperty ;
-    rdfs:label "UI label"@en ;
-    rdfs:comment "Human-readable label for a relationship in the UI"@en ;
+    rdfs:label "UI label" ;
+    rdfs:comment "Human-readable label for a relationship in the UI" ;
     rdfs:range xsd:string .
 
 ontos:cardinality a owl:AnnotationProperty ;
-    rdfs:label "cardinality"@en ;
-    rdfs:comment "Relationship cardinality: '0..1', '1..1', '0..*', '1..*'"@en ;
+    rdfs:label "cardinality" ;
+    rdfs:comment "Relationship cardinality: '0..1', '1..1', '0..*', '1..*'" ;
     rdfs:range xsd:string .
 
 ontos:uiDisplayContext a owl:AnnotationProperty ;
-    rdfs:label "UI display context"@en ;
-    rdfs:comment "Where to render: detail-page, sidebar, tab, inline"@en ;
+    rdfs:label "UI display context" ;
+    rdfs:comment "Where to render: detail-page, sidebar, tab, inline" ;
     rdfs:range xsd:string .
 
 ontos:inverseLabel a owl:AnnotationProperty ;
-    rdfs:label "inverse label"@en ;
-    rdfs:comment "Label shown on the target side of a relationship (e.g. 'Datasets' on a DataProduct, 'Data Product' on a Dataset)"@en ;
+    rdfs:label "inverse label" ;
+    rdfs:comment "Label shown on the target side of a relationship (e.g. 'Datasets' on a DataProduct, 'Data Product' on a Dataset)" ;
     rdfs:range xsd:string .
 
 ontos:isHierarchical a owl:AnnotationProperty ;
-    rdfs:label "is hierarchical"@en ;
-    rdfs:comment "Marks a relationship as hierarchical/containment (parent-child) for hierarchy browser navigation"@en ;
+    rdfs:label "is hierarchical" ;
+    rdfs:comment "Marks a relationship as hierarchical/containment (parent-child) for hierarchy browser navigation" ;
     rdfs:range xsd:boolean .
 
 
@@ -136,23 +136,23 @@ ontos:isHierarchical a owl:AnnotationProperty ;
 # ############################################################################
 
 ontos:Entity a rdfs:Class ;
-    rdfs:label "Entity"@en ;
-    rdfs:comment "Root class for all Ontos application entities"@en .
+    rdfs:label "Entity" ;
+    rdfs:comment "Root class for all Ontos application entities" .
 
 ontos:OrganizationalUnit a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Organizational Unit"@en ;
-    rdfs:comment "Base class for organizational structures that contain and organize data assets"@en .
+    rdfs:label "Organizational Unit" ;
+    rdfs:comment "Base class for organizational structures that contain and organize data assets" .
 
 ontos:GovernanceArtifact a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Governance Artifact"@en ;
-    rdfs:comment "Base class for governance, compliance, and documentation artifacts"@en .
+    rdfs:label "Governance Artifact" ;
+    rdfs:comment "Base class for governance, compliance, and documentation artifacts" .
 
 ontos:Asset a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Asset"@en ;
-    rdfs:comment "Base class for all asset-backed entities stored in AssetDb + AssetTypeDb"@en ;
+    rdfs:label "Asset" ;
+    rdfs:comment "Base class for all asset-backed entities stored in AssetDb + AssetTypeDb" ;
     ontos:modelTier "asset" .
 
 
@@ -168,8 +168,8 @@ ontos:Asset a rdfs:Class ;
 
 ontos:DataDomain a rdfs:Class ;
     rdfs:subClassOf ontos:OrganizationalUnit ;
-    rdfs:label "Data Domain"@en ;
-    rdfs:comment "Logical organizational unit for grouping related data products and assets"@en ;
+    rdfs:label "Data Domain" ;
+    rdfs:comment "Logical organizational unit for grouping related data products and assets" ;
     skos:example "Customer Domain, Financial Domain, Product Domain" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "Boxes" ;
@@ -179,8 +179,8 @@ ontos:DataDomain a rdfs:Class ;
 
 ontos:DataProduct a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Data Product"@en ;
-    rdfs:comment "Curated, versioned data offering with defined inputs, outputs, and contracts. Follows ODPS v1.0.0."@en ;
+    rdfs:label "Data Product" ;
+    rdfs:comment "Curated, versioned data offering with defined inputs, outputs, and contracts. Follows ODPS v1.0.0." ;
     skos:example "Customer 360 View, Real-time Fraud Detection" ;
     skos:definition "Products belong to domains, contain datasets, and are governed by data contracts" ;
     ontos:modelTier "dedicated" ;
@@ -191,8 +191,8 @@ ontos:DataProduct a rdfs:Class ;
 
 ontos:OutputPort a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Output Port"@en ;
-    rdfs:comment "An output endpoint of a data product that exposes data via a specific delivery method"@en ;
+    rdfs:label "Output Port" ;
+    rdfs:comment "An output endpoint of a data product that exposes data via a specific delivery method" ;
     skos:example "Daily Churn Rate, ML Model Endpoint, Weekly Revenue Report" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "ArrowUpFromLine" ;
@@ -202,8 +202,8 @@ ontos:OutputPort a rdfs:Class ;
 
 ontos:DataContract a rdfs:Class ;
     rdfs:subClassOf ontos:GovernanceArtifact ;
-    rdfs:label "Data Contract"@en ;
-    rdfs:comment "Formal agreement specifying schema, quality, SLA, and access rules for data. Follows ODCS v3.1.0."@en ;
+    rdfs:label "Data Contract" ;
+    rdfs:comment "Formal agreement specifying schema, quality, SLA, and access rules for data. Follows ODCS v3.0.2." ;
     skos:example "Customer Data Contract v1.0, Transaction Event Contract v2.1" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "FileCheck" ;
@@ -213,8 +213,8 @@ ontos:DataContract a rdfs:Class ;
 
 ontos:Team a rdfs:Class ;
     rdfs:subClassOf ontos:OrganizationalUnit ;
-    rdfs:label "Team"@en ;
-    rdfs:comment "Collection of users and groups with specific roles and domain assignments"@en ;
+    rdfs:label "Team" ;
+    rdfs:comment "Collection of users and groups with specific roles and domain assignments" ;
     skos:example "Data Engineering Team, Analytics Team" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "Users" ;
@@ -224,8 +224,8 @@ ontos:Team a rdfs:Class ;
 
 ontos:Project a rdfs:Class ;
     rdfs:subClassOf ontos:OrganizationalUnit ;
-    rdfs:label "Project"@en ;
-    rdfs:comment "Workspace container that assigns teams to specific initiatives with isolation boundaries"@en ;
+    rdfs:label "Project" ;
+    rdfs:comment "Workspace container that assigns teams to specific initiatives with isolation boundaries" ;
     skos:example "Customer Analytics Platform, Risk Reporting System" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "FolderKanban" ;
@@ -237,8 +237,8 @@ ontos:Project a rdfs:Class ;
 
 ontos:CompliancePolicy a rdfs:Class ;
     rdfs:subClassOf ontos:GovernanceArtifact ;
-    rdfs:label "Compliance Policy"@en ;
-    rdfs:comment "DSL-based compliance rule with automated evaluation, scoring, and per-entity results"@en ;
+    rdfs:label "Compliance Policy" ;
+    rdfs:comment "DSL-based compliance rule with automated evaluation, scoring, and per-entity results" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "Scale" ;
     ontos:uiCategory "governance" ;
@@ -247,8 +247,8 @@ ontos:CompliancePolicy a rdfs:Class ;
 
 ontos:GenieSpace a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Genie Space"@en ;
-    rdfs:comment "Databricks AI-powered natural language query space created from data products"@en ;
+    rdfs:label "Genie Space" ;
+    rdfs:comment "Databricks AI-powered natural language query space created from data products" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "Sparkles" ;
     ontos:uiCategory "analytics" ;
@@ -257,8 +257,8 @@ ontos:GenieSpace a rdfs:Class ;
 
 ontos:SemanticModelEntity a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Semantic Model"@en ;
-    rdfs:comment "Uploaded ontology or taxonomy file (TTL, RDF, OWL) stored in the knowledge graph"@en ;
+    rdfs:label "Semantic Model" ;
+    rdfs:comment "Uploaded ontology or taxonomy file (TTL, RDF, OWL) stored in the knowledge graph" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "Network" ;
     ontos:uiCategory "governance" ;
@@ -267,8 +267,8 @@ ontos:SemanticModelEntity a rdfs:Class ;
 
 ontos:BusinessRole a rdfs:Class ;
     rdfs:subClassOf ontos:GovernanceArtifact ;
-    rdfs:label "Business Role"@en ;
-    rdfs:comment "Named role users can hold for ownership assignments (Data Owner, Domain Steward, etc.)"@en ;
+    rdfs:label "Business Role" ;
+    rdfs:comment "Named role users can hold for ownership assignments (Data Owner, Domain Steward, etc.)" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "BadgeCheck" ;
     ontos:uiCategory "governance" ;
@@ -277,8 +277,8 @@ ontos:BusinessRole a rdfs:Class ;
 
 ontos:ProcessWorkflow a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Process Workflow"@en ;
-    rdfs:comment "User-designed automation with validation, approval, notification, and scripting steps"@en ;
+    rdfs:label "Process Workflow" ;
+    rdfs:comment "User-designed automation with validation, approval, notification, and scripting steps" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "Workflow" ;
     ontos:uiCategory "system" ;
@@ -287,8 +287,8 @@ ontos:ProcessWorkflow a rdfs:Class ;
 
 ontos:MdmConfig a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "MDM Configuration"@en ;
-    rdfs:comment "Master Data Management configuration with matching rules, source links, and match runs"@en ;
+    rdfs:label "MDM Configuration" ;
+    rdfs:comment "Master Data Management configuration with matching rules, source links, and match runs" ;
     ontos:modelTier "dedicated" ;
     ontos:uiIcon "GitMerge" ;
     ontos:uiCategory "data" ;
@@ -299,14 +299,14 @@ ontos:MdmConfig a rdfs:Class ;
 
 ontos:TeamMember a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Team Member"@en ;
-    rdfs:comment "Individual user or group membership within a team with optional role overrides"@en ;
+    rdfs:label "Team Member" ;
+    rdfs:comment "Individual user or group membership within a team with optional role overrides" ;
     ontos:modelTier "dedicated" .
 
 ontos:Ownership a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Ownership"@en ;
-    rdfs:comment "Named ownership assignment linking user, role, and entity"@en ;
+    rdfs:label "Ownership" ;
+    rdfs:comment "Named ownership assignment linking user, role, and entity" ;
     skos:definition "Uses named reification pattern to avoid blank nodes while supporting multiple owners with roles" ;
     ontos:modelTier "dedicated" .
 
@@ -324,8 +324,8 @@ ontos:Ownership a rdfs:Class ;
 
 ontos:Dataset a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Dataset"@en ;
-    rdfs:comment "Business-level grouping of related tables and views representing a coherent data entity"@en ;
+    rdfs:label "Dataset" ;
+    rdfs:comment "Business-level grouping of related tables and views representing a coherent data entity" ;
     skos:example "Customer Master Dataset, Transaction Events Dataset" ;
     skos:definition "Sits between Data Product and physical tables: Product > Dataset > Table > Column" ;
     ontos:modelTier "asset" ;
@@ -336,8 +336,8 @@ ontos:Dataset a rdfs:Class ;
 
 ontos:Schema a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Schema"@en ;
-    rdfs:comment "Platform-level container (UC schema, BQ dataset, Snowflake schema) that organizes tables and views"@en ;
+    rdfs:label "Schema" ;
+    rdfs:comment "Platform-level container (UC schema, BQ dataset, Snowflake schema) that organizes tables and views" ;
     skos:example "catalog.sales, project.analytics_dataset" ;
     skos:definition "Structural container between System and Table/View in the platform hierarchy" ;
     ontos:modelTier "asset" ;
@@ -348,8 +348,8 @@ ontos:Schema a rdfs:Class ;
 
 ontos:Table a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Table"@en ;
-    rdfs:comment "Physical table in a data platform (Unity Catalog, Snowflake, BigQuery, etc.)"@en ;
+    rdfs:label "Table" ;
+    rdfs:comment "Physical table in a data platform (Unity Catalog, Snowflake, BigQuery, etc.)" ;
     skos:example "catalog.schema.customers, catalog.schema.transactions" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Table2" ;
@@ -359,8 +359,8 @@ ontos:Table a rdfs:Class ;
 
 ontos:View a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "View"@en ;
-    rdfs:comment "Physical view in a data platform"@en ;
+    rdfs:label "View" ;
+    rdfs:comment "Physical view in a data platform" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Eye" ;
     ontos:uiCategory "data" ;
@@ -369,8 +369,8 @@ ontos:View a rdfs:Class ;
 
 ontos:Column a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Column"@en ;
-    rdfs:comment "Column within a physical table or view"@en ;
+    rdfs:label "Column" ;
+    rdfs:comment "Column within a physical table or view" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Columns2" ;
     ontos:uiCategory "data" ;
@@ -381,8 +381,8 @@ ontos:Column a rdfs:Class ;
 
 ontos:Policy a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Policy"@en ;
-    rdfs:comment "Formal, reusable rule for data access, quality, retention, or usage"@en ;
+    rdfs:label "Policy" ;
+    rdfs:comment "Formal, reusable rule for data access, quality, retention, or usage" ;
     skos:example "PII Masking Policy, 90-Day Retention Policy" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Shield" ;
@@ -392,8 +392,8 @@ ontos:Policy a rdfs:Class ;
 
 ontos:BusinessTerm a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Business Term"@en ;
-    rdfs:comment "Business glossary term promoted to a first-class cataloged asset with definitions and linked entities"@en ;
+    rdfs:label "Business Term" ;
+    rdfs:comment "Business glossary term promoted to a first-class cataloged asset with definitions and linked entities" ;
     skos:example "Customer, Revenue, Churn Rate" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "BookOpen" ;
@@ -405,8 +405,8 @@ ontos:BusinessTerm a rdfs:Class ;
 
 ontos:Dashboard a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Dashboard"@en ;
-    rdfs:comment "BI dashboard or report consuming data products or physical assets"@en ;
+    rdfs:label "Dashboard" ;
+    rdfs:comment "BI dashboard or report consuming data products or physical assets" ;
     skos:example "Retail Performance Dashboard, Customer Lifetime Value Report" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "LayoutDashboard" ;
@@ -416,8 +416,8 @@ ontos:Dashboard a rdfs:Class ;
 
 ontos:Notebook a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Notebook"@en ;
-    rdfs:comment "Analytics or data engineering notebook"@en ;
+    rdfs:label "Notebook" ;
+    rdfs:comment "Analytics or data engineering notebook" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "FileCode" ;
     ontos:uiCategory "analytics" ;
@@ -426,8 +426,8 @@ ontos:Notebook a rdfs:Class ;
 
 ontos:MLModel a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "ML Model"@en ;
-    rdfs:comment "Machine learning model registered in a model registry"@en ;
+    rdfs:label "ML Model" ;
+    rdfs:comment "Machine learning model registered in a model registry" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Brain" ;
     ontos:uiCategory "analytics" ;
@@ -438,8 +438,8 @@ ontos:MLModel a rdfs:Class ;
 
 ontos:APIEndpoint a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "API Endpoint"@en ;
-    rdfs:comment "Data API endpoint exposing data products or services"@en ;
+    rdfs:label "API Endpoint" ;
+    rdfs:comment "Data API endpoint exposing data products or services" ;
     skos:example "POST /v1/customers/search, GET /v1/transactions" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Globe" ;
@@ -449,8 +449,8 @@ ontos:APIEndpoint a rdfs:Class ;
 
 ontos:Stream a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Stream"@en ;
-    rdfs:comment "Streaming source or sink (Kafka topic, Kinesis stream, Event Hub, etc.)"@en ;
+    rdfs:label "Stream" ;
+    rdfs:comment "Streaming source or sink (Kafka topic, Kinesis stream, Event Hub, etc.)" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Activity" ;
     ontos:uiCategory "integration" ;
@@ -461,8 +461,8 @@ ontos:Stream a rdfs:Class ;
 
 ontos:LogicalEntity a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Logical Entity"@en ;
-    rdfs:comment "Business-level entity in the conceptual/logical data model (e.g. Customer, Order, Product)"@en ;
+    rdfs:label "Logical Entity" ;
+    rdfs:comment "Business-level entity in the conceptual/logical data model (e.g. Customer, Order, Product)" ;
     skos:example "Customer, Order, Product, Employee" ;
     skos:definition "Part of the CDM layer connecting business terms to physical implementations" ;
     ontos:modelTier "asset" ;
@@ -473,8 +473,8 @@ ontos:LogicalEntity a rdfs:Class ;
 
 ontos:LogicalAttribute a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Logical Attribute"@en ;
-    rdfs:comment "Named attribute of a logical entity representing a business-meaningful data element"@en ;
+    rdfs:label "Logical Attribute" ;
+    rdfs:comment "Named attribute of a logical entity representing a business-meaningful data element" ;
     skos:example "Customer.Id, Customer.Email, Order.TotalAmount" ;
     skos:definition "Bridges business terms to physical columns via implemented_by relationships" ;
     ontos:modelTier "asset" ;
@@ -487,8 +487,8 @@ ontos:LogicalAttribute a rdfs:Class ;
 
 ontos:DeliveryChannel a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Delivery Channel"@en ;
-    rdfs:comment "Mechanism through which data products expose data to consumers (dashboard, API, report, file, stream)"@en ;
+    rdfs:label "Delivery Channel" ;
+    rdfs:comment "Mechanism through which data products expose data to consumers (dashboard, API, report, file, stream)" ;
     skos:example "Customer 360 API, CLV Dashboard, Daily Revenue Report, Partner Data Feed" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Send" ;
@@ -500,8 +500,8 @@ ontos:DeliveryChannel a rdfs:Class ;
 
 ontos:System a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "System"@en ;
-    rdfs:comment "External system, platform, or service that contains or produces data assets"@en ;
+    rdfs:label "System" ;
+    rdfs:comment "External system, platform, or service that contains or produces data assets" ;
     skos:example "Databricks Lakehouse, Salesforce CRM, Power BI Service" ;
     ontos:modelTier "asset" ;
     ontos:uiIcon "Server" ;
@@ -511,8 +511,8 @@ ontos:System a rdfs:Class ;
 
 ontos:Catalog a rdfs:Class ;
     rdfs:subClassOf ontos:Asset ;
-    rdfs:label "Catalog"@en ;
-    rdfs:comment "Platform-level catalog (UC catalog, BQ project, Snowflake database) that groups schemas"@en ;
+    rdfs:label "Catalog" ;
+    rdfs:comment "Platform-level catalog (UC catalog, BQ project, Snowflake database) that groups schemas" ;
     skos:example "main, hive_metastore, my-gcp-project" ;
     skos:definition "Structural container between System and Schema in the platform hierarchy" ;
     ontos:modelTier "asset" ;
@@ -530,41 +530,41 @@ ontos:Catalog a rdfs:Class ;
 
 ontos:BusinessGlossary a rdfs:Class ;
     rdfs:subClassOf ontos:GovernanceArtifact ;
-    rdfs:label "Business Glossary"@en ;
-    rdfs:comment "Hierarchical collection of business terms with organizational scope"@en ;
+    rdfs:label "Business Glossary" ;
+    rdfs:comment "Hierarchical collection of business terms with organizational scope" ;
     skos:definition "Supports inheritance from corporate -> LOB -> department -> team levels" ;
     ontos:modelTier "dedicated" .
 
 ontos:GlossaryTerm a rdfs:Class ;
     rdfs:subClassOf ontos:GovernanceArtifact ;
-    rdfs:label "Glossary Term"@en ;
-    rdfs:comment "Business term definition with synonyms, examples, and tagged assets"@en ;
+    rdfs:label "Glossary Term" ;
+    rdfs:comment "Business term definition with synonyms, examples, and tagged assets" ;
     skos:example "Customer, Revenue, Product Category" ;
     ontos:modelTier "dedicated" .
 
 ontos:AssetReview a rdfs:Class ;
     rdfs:subClassOf ontos:GovernanceArtifact ;
-    rdfs:label "Asset Review"@en ;
-    rdfs:comment "Approval workflow for Databricks assets including review status and comments"@en ;
+    rdfs:label "Asset Review" ;
+    rdfs:comment "Approval workflow for Databricks assets including review status and comments" ;
     ontos:modelTier "dedicated" .
 
 ontos:SemanticLink a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Semantic Link"@en ;
-    rdfs:comment "Association between application entities and ontology concepts via IRIs"@en ;
+    rdfs:label "Semantic Link" ;
+    rdfs:comment "Association between application entities and ontology concepts via IRIs" ;
     skos:definition "Enables semantic enrichment and knowledge graph navigation" ;
     ontos:modelTier "dedicated" .
 
 ontos:OntologyConcept a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Ontology Concept"@en ;
-    rdfs:comment "RDF/RDFS concept from loaded taxonomies with hierarchical relationships"@en ;
+    rdfs:label "Ontology Concept" ;
+    rdfs:comment "RDF/RDFS concept from loaded taxonomies with hierarchical relationships" ;
     ontos:modelTier "dedicated" .
 
 ontos:KnowledgeCollection a rdfs:Class ;
     rdfs:subClassOf ontos:Entity ;
-    rdfs:label "Knowledge Collection"@en ;
-    rdfs:comment "Generic container for glossaries, taxonomies, or ontologies with hierarchical organization"@en ;
+    rdfs:label "Knowledge Collection" ;
+    rdfs:comment "Generic container for glossaries, taxonomies, or ontologies with hierarchical organization" ;
     skos:definition "Supports custom and imported knowledge systems with optional editing capability" ;
     ontos:modelTier "dedicated" .
 
@@ -581,67 +581,67 @@ ontos:KnowledgeCollection a rdfs:Class ;
 # --- Data Product hierarchy ---
 
 ontos:hasDataset a owl:ObjectProperty ;
-    rdfs:label "has dataset"@en ;
-    rdfs:comment "Links a data product to its constituent datasets"@en ;
+    rdfs:label "has dataset" ;
+    rdfs:comment "Links a data product to its constituent datasets" ;
     rdfs:domain ontos:DataProduct ;
     rdfs:range ontos:Dataset ;
-    ontos:uiLabel "Contains Datasets"@en ;
-    ontos:inverseLabel "Data Product"@en ;
+    ontos:uiLabel "Contains Datasets" ;
+    ontos:inverseLabel "Data Product" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:hasCatalog a owl:ObjectProperty ;
-    rdfs:label "has catalog"@en ;
-    rdfs:comment "Links a system to a catalog/project/database it contains"@en ;
+    rdfs:label "has catalog" ;
+    rdfs:comment "Links a system to a catalog/project/database it contains" ;
     rdfs:domain ontos:System ;
     rdfs:range ontos:Catalog ;
-    ontos:uiLabel "Contains Catalogs"@en ;
-    ontos:inverseLabel "System"@en ;
+    ontos:uiLabel "Contains Catalogs" ;
+    ontos:inverseLabel "System" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:hasSchema a owl:ObjectProperty ;
-    rdfs:label "has schema"@en ;
-    rdfs:comment "Links a system or catalog to a schema/namespace it contains"@en ;
+    rdfs:label "has schema" ;
+    rdfs:comment "Links a system or catalog to a schema/namespace it contains" ;
     rdfs:domain ontos:System , ontos:Catalog ;
     rdfs:range ontos:Schema ;
-    ontos:uiLabel "Contains Schemas"@en ;
-    ontos:inverseLabel "Catalog"@en ;
+    ontos:uiLabel "Contains Schemas" ;
+    ontos:inverseLabel "Catalog" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:hasTable a owl:ObjectProperty ;
-    rdfs:label "has table"@en ;
-    rdfs:comment "Links a dataset or schema to a table it contains"@en ;
+    rdfs:label "has table" ;
+    rdfs:comment "Links a dataset or schema to a table it contains" ;
     rdfs:domain ontos:Dataset , ontos:Schema ;
     rdfs:range ontos:Table ;
-    ontos:uiLabel "Contains Tables"@en ;
-    ontos:inverseLabel "Dataset"@en ;
+    ontos:uiLabel "Contains Tables" ;
+    ontos:inverseLabel "Dataset" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:hasView a owl:ObjectProperty ;
-    rdfs:label "has view"@en ;
-    rdfs:comment "Links a dataset or schema to a view it contains"@en ;
+    rdfs:label "has view" ;
+    rdfs:comment "Links a dataset or schema to a view it contains" ;
     rdfs:domain ontos:Dataset , ontos:Schema ;
     rdfs:range ontos:View ;
-    ontos:uiLabel "Contains Views"@en ;
-    ontos:inverseLabel "Dataset"@en ;
+    ontos:uiLabel "Contains Views" ;
+    ontos:inverseLabel "Dataset" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:hasColumn a owl:ObjectProperty ;
-    rdfs:label "has column"@en ;
-    rdfs:comment "Links a table or view to its columns"@en ;
+    rdfs:label "has column" ;
+    rdfs:comment "Links a table or view to its columns" ;
     rdfs:domain ontos:Table , ontos:View ;
     rdfs:range ontos:Column ;
-    ontos:uiLabel "Has Columns"@en ;
-    ontos:inverseLabel "Table"@en ;
+    ontos:uiLabel "Has Columns" ;
+    ontos:inverseLabel "Table" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
@@ -649,48 +649,48 @@ ontos:hasColumn a owl:ObjectProperty ;
 # --- Governance relationships ---
 
 ontos:governedBy a owl:ObjectProperty ;
-    rdfs:label "governed by"@en ;
-    rdfs:comment "Links a dataset to the data contract that governs its schema, quality, and SLA"@en ;
+    rdfs:label "governed by" ;
+    rdfs:comment "Links a dataset to the data contract that governs its schema, quality, and SLA" ;
     rdfs:domain ontos:Dataset ;
     rdfs:range ontos:DataContract ;
-    ontos:uiLabel "Governed by Contract"@en ;
-    ontos:inverseLabel "Governed Datasets"@en ;
+    ontos:uiLabel "Governed by Contract" ;
+    ontos:inverseLabel "Governed Datasets" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" .
 
 ontos:implementsContract a owl:ObjectProperty ;
-    rdfs:label "implements contract"@en ;
-    rdfs:comment "Links a physical table to the data contract it implements (for direct contract-table mapping)"@en ;
+    rdfs:label "implements contract" ;
+    rdfs:comment "Links a physical table to the data contract it implements (for direct contract-table mapping)" ;
     rdfs:domain ontos:Table , ontos:View ;
     rdfs:range ontos:DataContract ;
-    ontos:uiLabel "Implements Contract"@en ;
-    ontos:inverseLabel "Implementing Tables"@en ;
+    ontos:uiLabel "Implements Contract" ;
+    ontos:inverseLabel "Implementing Tables" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" .
 
 ontos:attachedPolicy a owl:ObjectProperty ;
-    rdfs:label "attached policy"@en ;
-    rdfs:comment "Links an entity to a policy that applies to it"@en ;
+    rdfs:label "attached policy" ;
+    rdfs:comment "Links an entity to a policy that applies to it" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:DataDomain ,
                ontos:Dataset , ontos:Schema , ontos:Table , ontos:View ,
                ontos:Column , ontos:System , ontos:Dashboard , ontos:Notebook ,
                ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Policy ;
-    ontos:uiLabel "Has Policy"@en ;
-    ontos:inverseLabel "Applied To"@en ;
+    ontos:uiLabel "Has Policy" ;
+    ontos:inverseLabel "Applied To" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:hasTerm a owl:ObjectProperty ;
-    rdfs:label "has term"@en ;
-    rdfs:comment "Links an entity to a business term that describes it"@en ;
+    rdfs:label "has term" ;
+    rdfs:comment "Links an entity to a business term that describes it" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
                ontos:Table , ontos:View , ontos:Column , ontos:LogicalEntity ,
                ontos:LogicalAttribute , ontos:BusinessTerm , ontos:Dashboard ,
                ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:BusinessTerm ;
-    ontos:uiLabel "Annotated with"@en ;
-    ontos:inverseLabel "Used By"@en ;
+    ontos:uiLabel "Annotated with" ;
+    ontos:inverseLabel "Used By" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "sidebar" .
 
@@ -702,75 +702,75 @@ ontos:hasTerm a owl:ObjectProperty ;
 # ############################################################################
 
 ontos:belongsToDomain a owl:ObjectProperty ;
-    rdfs:label "belongs to domain"@en ;
-    rdfs:comment "Associates an entity with its parent data domain"@en ;
+    rdfs:label "belongs to domain" ;
+    rdfs:comment "Associates an entity with its parent data domain" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
                ontos:Table , ontos:View , ontos:BusinessTerm ,
                ontos:LogicalEntity ;
     rdfs:range ontos:DataDomain ;
-    ontos:uiLabel "Belongs to Domain"@en ;
-    ontos:inverseLabel "Contains"@en ;
+    ontos:uiLabel "Belongs to Domain" ;
+    ontos:inverseLabel "Contains" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" .
 
 ontos:hasParentDomain a owl:ObjectProperty ;
-    rdfs:label "has parent domain"@en ;
-    rdfs:comment "Defines hierarchical relationship between data domains"@en ;
+    rdfs:label "has parent domain" ;
+    rdfs:comment "Defines hierarchical relationship between data domains" ;
     rdfs:domain ontos:DataDomain ;
     rdfs:range ontos:DataDomain ;
-    ontos:uiLabel "Parent Domain"@en ;
-    ontos:inverseLabel "Sub-Domains"@en ;
+    ontos:uiLabel "Parent Domain" ;
+    ontos:inverseLabel "Sub-Domains" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" ;
     ontos:isHierarchical true .
 
 ontos:containsProduct a owl:ObjectProperty ;
-    rdfs:label "contains product"@en ;
-    rdfs:comment "Associates a data domain with its contained data products"@en ;
+    rdfs:label "contains product" ;
+    rdfs:comment "Associates a data domain with its contained data products" ;
     rdfs:domain ontos:DataDomain ;
     rdfs:range ontos:DataProduct ;
-    ontos:uiLabel "Contains Products"@en ;
-    ontos:inverseLabel "Domain"@en ;
+    ontos:uiLabel "Contains Products" ;
+    ontos:inverseLabel "Domain" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:ownedByTeam a owl:ObjectProperty ;
-    rdfs:label "owned by team"@en ;
-    rdfs:comment "Associates an entity with its owning team"@en ;
+    rdfs:label "owned by team" ;
+    rdfs:comment "Associates an entity with its owning team" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:DataDomain ,
                ontos:Dataset , ontos:Schema , ontos:Table , ontos:View ,
                ontos:System , ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
                ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Team ;
-    ontos:uiLabel "Owned by"@en ;
-    ontos:inverseLabel "Owns"@en ;
+    ontos:uiLabel "Owned by" ;
+    ontos:inverseLabel "Owns" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" .
 
 ontos:inProject a owl:ObjectProperty ;
-    rdfs:label "in project"@en ;
-    rdfs:comment "Associates an entity with its project scope"@en ;
+    rdfs:label "in project" ;
+    rdfs:comment "Associates an entity with its project scope" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ;
     rdfs:range ontos:Project ;
-    ontos:uiLabel "In Project"@en ;
-    ontos:inverseLabel "Contains"@en ;
+    ontos:uiLabel "In Project" ;
+    ontos:inverseLabel "Contains" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" .
 
 ontos:assignedToTeam a owl:ObjectProperty ;
-    rdfs:label "assigned to team"@en ;
-    rdfs:comment "Associates a project with one or more assigned teams"@en ;
+    rdfs:label "assigned to team" ;
+    rdfs:comment "Associates a project with one or more assigned teams" ;
     rdfs:domain ontos:Project ;
     rdfs:range ontos:Team ;
-    ontos:uiLabel "Assigned to"@en ;
-    ontos:inverseLabel "Projects"@en ;
+    ontos:uiLabel "Assigned to" ;
+    ontos:inverseLabel "Projects" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:memberOfTeam a owl:ObjectProperty ;
-    rdfs:label "member of team"@en ;
-    rdfs:comment "Associates a team member with their team"@en ;
+    rdfs:label "member of team" ;
+    rdfs:comment "Associates a team member with their team" ;
     rdfs:domain ontos:TeamMember ;
     rdfs:range ontos:Team ;
     ontos:cardinality "1..1" .
@@ -783,140 +783,140 @@ ontos:memberOfTeam a owl:ObjectProperty ;
 # ############################################################################
 
 ontos:relatesTo a owl:ObjectProperty ;
-    rdfs:label "relates to"@en ;
-    rdfs:comment "Links a business term to logical entities or attributes that define it"@en ;
+    rdfs:label "relates to" ;
+    rdfs:comment "Links a business term to logical entities or attributes that define it" ;
     rdfs:domain ontos:BusinessTerm ;
     rdfs:range ontos:LogicalEntity , ontos:LogicalAttribute ;
-    ontos:uiLabel "Related Logical Model"@en ;
-    ontos:inverseLabel "Business Terms"@en ;
+    ontos:uiLabel "Related Logical Model" ;
+    ontos:inverseLabel "Business Terms" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:hasLogicalAttribute a owl:ObjectProperty ;
-    rdfs:label "has logical attribute"@en ;
-    rdfs:comment "Links a logical entity to its constituent attributes"@en ;
+    rdfs:label "has logical attribute" ;
+    rdfs:comment "Links a logical entity to its constituent attributes" ;
     rdfs:domain ontos:LogicalEntity ;
     rdfs:range ontos:LogicalAttribute ;
-    ontos:uiLabel "Has Attributes"@en ;
-    ontos:inverseLabel "Logical Entity"@en ;
+    ontos:uiLabel "Has Attributes" ;
+    ontos:inverseLabel "Logical Entity" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:implementedBy a owl:ObjectProperty ;
-    rdfs:label "implemented by"@en ;
-    rdfs:comment "Links a logical attribute to the physical assets (columns, datasets) that implement it"@en ;
+    rdfs:label "implemented by" ;
+    rdfs:comment "Links a logical attribute to the physical assets (columns, datasets) that implement it" ;
     rdfs:domain ontos:LogicalAttribute ;
     rdfs:range ontos:Dataset , ontos:Column ;
-    ontos:uiLabel "Implemented By"@en ;
-    ontos:inverseLabel "Implements"@en ;
+    ontos:uiLabel "Implemented By" ;
+    ontos:inverseLabel "Implements" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:exposes a owl:ObjectProperty ;
-    rdfs:label "exposes"@en ;
-    rdfs:comment "Links a data product to the delivery channels through which it serves data"@en ;
+    rdfs:label "exposes" ;
+    rdfs:comment "Links a data product to the delivery channels through which it serves data" ;
     rdfs:domain ontos:DataProduct ;
     rdfs:range ontos:DeliveryChannel ;
-    ontos:uiLabel "Exposes"@en ;
-    ontos:inverseLabel "Exposed By"@en ;
+    ontos:uiLabel "Exposes" ;
+    ontos:inverseLabel "Exposed By" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:hasOutputPort a owl:ObjectProperty ;
-    rdfs:label "has output port"@en ;
-    rdfs:comment "Links a data product to its output ports (deliverables)"@en ;
+    rdfs:label "has output port" ;
+    rdfs:comment "Links a data product to its output ports (deliverables)" ;
     rdfs:domain ontos:DataProduct ;
     rdfs:range ontos:OutputPort ;
-    ontos:uiLabel "Has Output Ports"@en ;
-    ontos:inverseLabel "Data Product"@en ;
+    ontos:uiLabel "Has Output Ports" ;
+    ontos:inverseLabel "Data Product" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:portHasTable a owl:ObjectProperty ;
-    rdfs:label "port has table"@en ;
-    rdfs:comment "Links an output port to a table it delivers"@en ;
+    rdfs:label "port has table" ;
+    rdfs:comment "Links an output port to a table it delivers" ;
     rdfs:domain ontos:OutputPort ;
     rdfs:range ontos:Table ;
-    ontos:uiLabel "Delivers"@en ;
-    ontos:inverseLabel "Delivered By Port"@en ;
+    ontos:uiLabel "Delivers" ;
+    ontos:inverseLabel "Delivered By Port" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:portHasView a owl:ObjectProperty ;
-    rdfs:label "port has view"@en ;
-    rdfs:comment "Links an output port to a view it delivers"@en ;
+    rdfs:label "port has view" ;
+    rdfs:comment "Links an output port to a view it delivers" ;
     rdfs:domain ontos:OutputPort ;
     rdfs:range ontos:View ;
-    ontos:uiLabel "Delivers"@en ;
-    ontos:inverseLabel "Delivered By Port"@en ;
+    ontos:uiLabel "Delivers" ;
+    ontos:inverseLabel "Delivered By Port" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:portHasDataset a owl:ObjectProperty ;
-    rdfs:label "port has dataset"@en ;
-    rdfs:comment "Links an output port to a dataset it delivers"@en ;
+    rdfs:label "port has dataset" ;
+    rdfs:comment "Links an output port to a dataset it delivers" ;
     rdfs:domain ontos:OutputPort ;
     rdfs:range ontos:Dataset ;
-    ontos:uiLabel "Delivers"@en ;
-    ontos:inverseLabel "Delivered By Port"@en ;
+    ontos:uiLabel "Delivers" ;
+    ontos:inverseLabel "Delivered By Port" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:portHasEndpoint a owl:ObjectProperty ;
-    rdfs:label "port has endpoint"@en ;
-    rdfs:comment "Links an output port to an API endpoint it delivers"@en ;
+    rdfs:label "port has endpoint" ;
+    rdfs:comment "Links an output port to an API endpoint it delivers" ;
     rdfs:domain ontos:OutputPort ;
     rdfs:range ontos:APIEndpoint ;
-    ontos:uiLabel "Delivers"@en ;
-    ontos:inverseLabel "Delivered By Port"@en ;
+    ontos:uiLabel "Delivers" ;
+    ontos:inverseLabel "Delivered By Port" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:portHasModel a owl:ObjectProperty ;
-    rdfs:label "port has model"@en ;
-    rdfs:comment "Links an output port to an ML model it delivers"@en ;
+    rdfs:label "port has model" ;
+    rdfs:comment "Links an output port to an ML model it delivers" ;
     rdfs:domain ontos:OutputPort ;
     rdfs:range ontos:MLModel ;
-    ontos:uiLabel "Delivers"@en ;
-    ontos:inverseLabel "Delivered By Port"@en ;
+    ontos:uiLabel "Delivers" ;
+    ontos:inverseLabel "Delivered By Port" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" ;
     ontos:isHierarchical true .
 
 ontos:dependsOn a owl:ObjectProperty ;
-    rdfs:label "depends on"@en ;
-    rdfs:comment "Links a data product to upstream data products it depends on"@en ;
+    rdfs:label "depends on" ;
+    rdfs:comment "Links a data product to upstream data products it depends on" ;
     rdfs:domain ontos:DataProduct ;
     rdfs:range ontos:DataProduct ;
-    ontos:uiLabel "Depends On"@en ;
-    ontos:inverseLabel "Depended On By"@en ;
+    ontos:uiLabel "Depends On" ;
+    ontos:inverseLabel "Depended On By" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:contractFor a owl:ObjectProperty ;
-    rdfs:label "contract for"@en ;
-    rdfs:comment "Links a data contract to the datasets or API endpoints it governs"@en ;
+    rdfs:label "contract for" ;
+    rdfs:comment "Links a data contract to the datasets or API endpoints it governs" ;
     rdfs:domain ontos:DataContract ;
     rdfs:range ontos:Dataset , ontos:APIEndpoint ;
-    ontos:uiLabel "Contract For"@en ;
-    ontos:inverseLabel "Governed By Contract"@en ;
+    ontos:uiLabel "Contract For" ;
+    ontos:inverseLabel "Governed By Contract" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:appliesTo a owl:ObjectProperty ;
-    rdfs:label "applies to"@en ;
-    rdfs:comment "Links a policy to the entities it governs"@en ;
+    rdfs:label "applies to" ;
+    rdfs:comment "Links a policy to the entities it governs" ;
     rdfs:domain ontos:Policy ;
     rdfs:range ontos:DataDomain , ontos:BusinessTerm , ontos:LogicalAttribute , ontos:DataProduct ;
-    ontos:uiLabel "Applies To"@en ;
-    ontos:inverseLabel "Governed By Policy"@en ;
+    ontos:uiLabel "Applies To" ;
+    ontos:inverseLabel "Governed By Policy" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
@@ -928,60 +928,60 @@ ontos:appliesTo a owl:ObjectProperty ;
 # ############################################################################
 
 ontos:consumesFrom a owl:ObjectProperty ;
-    rdfs:label "consumes from"@en ;
-    rdfs:comment "Indicates an asset reads or depends on another asset"@en ;
+    rdfs:label "consumes from" ;
+    rdfs:comment "Indicates an asset reads or depends on another asset" ;
     rdfs:domain ontos:Dataset , ontos:Table , ontos:View , ontos:Dashboard ,
                ontos:Notebook , ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Asset ;
-    ontos:uiLabel "Consumes From"@en ;
-    ontos:inverseLabel "Consumed By"@en ;
+    ontos:uiLabel "Consumes From" ;
+    ontos:inverseLabel "Consumed By" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:producesTo a owl:ObjectProperty ;
-    rdfs:label "produces to"@en ;
-    rdfs:comment "Indicates an asset writes to or feeds another asset"@en ;
+    rdfs:label "produces to" ;
+    rdfs:comment "Indicates an asset writes to or feeds another asset" ;
     rdfs:domain ontos:Dataset , ontos:Table , ontos:View , ontos:Notebook ,
                ontos:MLModel , ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Asset ;
-    ontos:uiLabel "Produces To"@en ;
-    ontos:inverseLabel "Produced By"@en ;
+    ontos:uiLabel "Produces To" ;
+    ontos:inverseLabel "Produced By" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "tab" .
 
 ontos:belongsToSystem a owl:ObjectProperty ;
-    rdfs:label "belongs to system"@en ;
-    rdfs:comment "Associates an asset with its host system or platform"@en ;
+    rdfs:label "belongs to system" ;
+    rdfs:comment "Associates an asset with its host system or platform" ;
     rdfs:domain ontos:Schema , ontos:Dataset , ontos:Table , ontos:View ,
                ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
                ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:System ;
-    ontos:uiLabel "Belongs to System"@en ;
-    ontos:inverseLabel "Contains"@en ;
+    ontos:uiLabel "Belongs to System" ;
+    ontos:inverseLabel "Contains" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" ;
     ontos:isHierarchical true .
 
 ontos:deployedOnSystem a owl:ObjectProperty ;
-    rdfs:label "deployed on system"@en ;
-    rdfs:comment "Links a data product to the system or platform where it is deployed"@en ;
+    rdfs:label "deployed on system" ;
+    rdfs:comment "Links a data product to the system or platform where it is deployed" ;
     rdfs:domain ontos:DataProduct ;
     rdfs:range ontos:System ;
-    ontos:uiLabel "Deployed On"@en ;
-    ontos:inverseLabel "Hosts Product"@en ;
+    ontos:uiLabel "Deployed On" ;
+    ontos:inverseLabel "Hosts Product" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" ;
     ontos:isHierarchical true .
 
 ontos:replacedBy a owl:ObjectProperty ;
-    rdfs:label "replaced by"@en ;
-    rdfs:comment "Indicates a deprecated asset has been replaced by a newer one"@en ;
+    rdfs:label "replaced by" ;
+    rdfs:comment "Indicates a deprecated asset has been replaced by a newer one" ;
     rdfs:domain ontos:Schema , ontos:Dataset , ontos:Table , ontos:View ,
                ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
                ontos:APIEndpoint , ontos:Stream ;
     rdfs:range ontos:Asset ;
-    ontos:uiLabel "Replaced By"@en ;
-    ontos:inverseLabel "Replaces"@en ;
+    ontos:uiLabel "Replaced By" ;
+    ontos:inverseLabel "Replaces" ;
     ontos:cardinality "0..1" ;
     ontos:uiDisplayContext "detail-page" .
 
@@ -993,8 +993,8 @@ ontos:replacedBy a owl:ObjectProperty ;
 # ############################################################################
 
 ontos:hasOwner a owl:ObjectProperty ;
-    rdfs:label "has owner"@en ;
-    rdfs:comment "Links an entity to an ownership record"@en ;
+    rdfs:label "has owner" ;
+    rdfs:comment "Links an entity to an ownership record" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:DataDomain ,
                ontos:Dataset , ontos:Schema , ontos:Table , ontos:View ,
                ontos:System , ontos:Dashboard , ontos:Notebook , ontos:MLModel ,
@@ -1003,60 +1003,60 @@ ontos:hasOwner a owl:ObjectProperty ;
     rdfs:range ontos:Ownership .
 
 ontos:hasSemanticConcept a owl:ObjectProperty ;
-    rdfs:label "has semantic concept"@en ;
-    rdfs:comment "Links an entity to ontology concepts for semantic enrichment"@en ;
+    rdfs:label "has semantic concept" ;
+    rdfs:comment "Links an entity to ontology concepts for semantic enrichment" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
                ontos:Table , ontos:View , ontos:Column , ontos:LogicalEntity ,
                ontos:LogicalAttribute , ontos:BusinessTerm ;
     rdfs:range ontos:OntologyConcept ;
-    ontos:uiLabel "Has Concepts"@en ;
+    ontos:uiLabel "Has Concepts" ;
     ontos:cardinality "0..*" ;
     ontos:uiDisplayContext "sidebar" .
 
 ontos:linkedToIRI a owl:ObjectProperty ;
-    rdfs:label "linked to IRI"@en ;
-    rdfs:comment "Direct reference to external ontology concept IRI"@en ;
+    rdfs:label "linked to IRI" ;
+    rdfs:comment "Direct reference to external ontology concept IRI" ;
     rdfs:domain ontos:SemanticLink .
 
 ontos:derivedFromGlossary a owl:ObjectProperty ;
-    rdfs:label "derived from glossary"@en ;
-    rdfs:comment "Links an ontology concept to its source glossary term"@en ;
+    rdfs:label "derived from glossary" ;
+    rdfs:comment "Links an ontology concept to its source glossary term" ;
     rdfs:domain ontos:OntologyConcept ;
     rdfs:range ontos:GlossaryTerm .
 
 ontos:parentGlossary a owl:ObjectProperty ;
-    rdfs:label "parent glossary"@en ;
-    rdfs:comment "Defines hierarchical inheritance between business glossaries"@en ;
+    rdfs:label "parent glossary" ;
+    rdfs:comment "Defines hierarchical inheritance between business glossaries" ;
     rdfs:domain ontos:BusinessGlossary ;
     rdfs:range ontos:BusinessGlossary .
 
 ontos:reviewedBy a owl:ObjectProperty ;
-    rdfs:label "reviewed by"@en ;
-    rdfs:comment "Associates an asset with its review process"@en ;
+    rdfs:label "reviewed by" ;
+    rdfs:comment "Associates an asset with its review process" ;
     rdfs:domain ontos:DataProduct , ontos:DataContract , ontos:Dataset ,
                ontos:Table , ontos:View ;
     rdfs:range ontos:AssetReview .
 
 ontos:taggedWithConcept a owl:ObjectProperty ;
-    rdfs:label "tagged with concept"@en ;
-    rdfs:comment "Associates a glossary term with tagged Databricks assets"@en ;
+    rdfs:label "tagged with concept" ;
+    rdfs:comment "Associates a glossary term with tagged Databricks assets" ;
     rdfs:domain ontos:GlossaryTerm .
 
 ontos:semanticAssignment a owl:ObjectProperty ;
-    rdfs:label "semantic assignment"@en ;
-    rdfs:comment "Links any resource to a semantic concept from a loaded taxonomy or ontology"@en ;
+    rdfs:label "semantic assignment" ;
+    rdfs:comment "Links any resource to a semantic concept from a loaded taxonomy or ontology" ;
     rdfs:range ontos:OntologyConcept .
 
 ontos:conceptAssignment a owl:ObjectProperty ;
     rdfs:subPropertyOf ontos:semanticAssignment ;
-    rdfs:label "concept assignment"@en ;
-    rdfs:comment "Links a resource to an ontology class or concept"@en ;
+    rdfs:label "concept assignment" ;
+    rdfs:comment "Links a resource to an ontology class or concept" ;
     rdfs:range ontos:OntologyConcept .
 
 ontos:propertyAssignment a owl:ObjectProperty ;
     rdfs:subPropertyOf ontos:semanticAssignment ;
-    rdfs:label "property assignment"@en ;
-    rdfs:comment "Links a resource to an ontology property"@en ;
+    rdfs:label "property assignment" ;
+    rdfs:comment "Links a resource to an ontology property" ;
     rdfs:range rdf:Property .
 
 
@@ -1069,14 +1069,14 @@ ontos:propertyAssignment a owl:ObjectProperty ;
 # --- Identifiers ---
 
 ontos:entityId a owl:DatatypeProperty ;
-    rdfs:label "entity ID"@en ;
-    rdfs:comment "Unique identifier for application entities"@en ;
+    rdfs:label "entity ID" ;
+    rdfs:comment "Unique identifier for application entities" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 ontos:name a owl:DatatypeProperty ;
-    rdfs:label "name"@en ;
-    rdfs:comment "Human-readable name of the entity"@en ;
+    rdfs:label "name" ;
+    rdfs:comment "Human-readable name of the entity" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1085,14 +1085,14 @@ ontos:name a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" .
 
 ontos:displayTitle a owl:DatatypeProperty ;
-    rdfs:label "display title"@en ;
-    rdfs:comment "Optional display title for presentation purposes"@en ;
+    rdfs:label "display title" ;
+    rdfs:comment "Optional display title for presentation purposes" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 ontos:description a owl:DatatypeProperty ;
-    rdfs:label "description"@en ;
-    rdfs:comment "Human-readable description of the entity"@en ;
+    rdfs:label "description" ;
+    rdfs:comment "Human-readable description of the entity" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "textarea" ;
@@ -1103,8 +1103,8 @@ ontos:description a owl:DatatypeProperty ;
 # --- Lifecycle ---
 
 ontos:status a owl:DatatypeProperty ;
-    rdfs:label "status"@en ;
-    rdfs:comment "Current operational status"@en ;
+    rdfs:label "status" ;
+    rdfs:comment "Current operational status" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1114,8 +1114,8 @@ ontos:status a owl:DatatypeProperty ;
     ontos:uiSelectOptions "draft,sandbox,proposed,under_review,approved,active,deprecated,retired" .
 
 ontos:version a owl:DatatypeProperty ;
-    rdfs:label "version"@en ;
-    rdfs:comment "Version identifier for versioned entities"@en ;
+    rdfs:label "version" ;
+    rdfs:comment "Version identifier for versioned entities" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1124,8 +1124,8 @@ ontos:version a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" .
 
 ontos:lifecycle a owl:DatatypeProperty ;
-    rdfs:label "lifecycle"@en ;
-    rdfs:comment "DEPRECATED — use ontos:status instead. Kept for backward compatibility."@en ;
+    rdfs:label "lifecycle" ;
+    rdfs:comment "DEPRECATED — use ontos:status instead. Kept for backward compatibility." ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     owl:deprecated true ;
@@ -1134,8 +1134,8 @@ ontos:lifecycle a owl:DatatypeProperty ;
 # --- Descriptive ---
 
 ontos:purpose a owl:DatatypeProperty ;
-    rdfs:label "purpose"@en ;
-    rdfs:comment "Intended purpose or business objective"@en ;
+    rdfs:label "purpose" ;
+    rdfs:comment "Intended purpose or business objective" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "textarea" ;
@@ -1144,107 +1144,107 @@ ontos:purpose a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" .
 
 ontos:usage a owl:DatatypeProperty ;
-    rdfs:label "usage"@en ;
-    rdfs:comment "Intended usage patterns and guidelines"@en ;
+    rdfs:label "usage" ;
+    rdfs:comment "Intended usage patterns and guidelines" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 ontos:limitations a owl:DatatypeProperty ;
-    rdfs:label "limitations"@en ;
-    rdfs:comment "Known limitations or constraints"@en ;
+    rdfs:label "limitations" ;
+    rdfs:comment "Known limitations or constraints" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 # --- Organizational scope ---
 
 ontos:organizationalScope a owl:DatatypeProperty ;
-    rdfs:label "organizational scope"@en ;
-    rdfs:comment "Organizational level of applicability"@en ;
+    rdfs:label "organizational scope" ;
+    rdfs:comment "Organizational level of applicability" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     skos:example "company, lob, department, team" .
 
 ontos:organizationalUnit a owl:DatatypeProperty ;
-    rdfs:label "organizational unit"@en ;
-    rdfs:comment "Specific organizational unit identifier"@en ;
+    rdfs:label "organizational unit" ;
+    rdfs:comment "Specific organizational unit identifier" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 # --- Ownership ---
 
 ontos:owner a owl:DatatypeProperty ;
-    rdfs:label "owner"@en ;
-    rdfs:comment "Primary owner or responsible party"@en ;
+    rdfs:label "owner" ;
+    rdfs:comment "Primary owner or responsible party" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 ontos:createdBy a owl:DatatypeProperty ;
-    rdfs:label "created by"@en ;
+    rdfs:label "created by" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 ontos:updatedBy a owl:DatatypeProperty ;
-    rdfs:label "updated by"@en ;
+    rdfs:label "updated by" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 # --- Temporal ---
 
 ontos:createdAt a owl:DatatypeProperty ;
-    rdfs:label "created at"@en ;
+    rdfs:label "created at" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:dateTime .
 
 ontos:updatedAt a owl:DatatypeProperty ;
-    rdfs:label "updated at"@en ;
+    rdfs:label "updated at" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:dateTime .
 
 ontos:publishedAt a owl:DatatypeProperty ;
-    rdfs:label "published at"@en ;
+    rdfs:label "published at" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:dateTime .
 
 ontos:publishedBy a owl:DatatypeProperty ;
-    rdfs:label "published by"@en ;
+    rdfs:label "published by" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:anyURI .
 
 ontos:certifiedAt a owl:DatatypeProperty ;
-    rdfs:label "certified at"@en ;
+    rdfs:label "certified at" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:dateTime .
 
 ontos:certifiedBy a owl:DatatypeProperty ;
-    rdfs:label "certified by"@en ;
+    rdfs:label "certified by" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:anyURI .
 
 ontos:certificationExpiresAt a owl:DatatypeProperty ;
-    rdfs:label "certification expires at"@en ;
+    rdfs:label "certification expires at" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:dateTime .
 
 ontos:certificationLevel a owl:DatatypeProperty ;
-    rdfs:label "certification level"@en ;
-    rdfs:comment "Ordinal of the assigned certification level (references certification_levels table)"@en ;
+    rdfs:label "certification level" ;
+    rdfs:comment "Ordinal of the assigned certification level (references certification_levels table)" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:integer .
 
 ontos:inheritedCertificationLevel a owl:DatatypeProperty ;
-    rdfs:label "inherited certification level"@en ;
-    rdfs:comment "Certification level inherited via entity relationships (BFS propagation)"@en ;
+    rdfs:label "inherited certification level" ;
+    rdfs:comment "Certification level inherited via entity relationships (BFS propagation)" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:integer .
 
 ontos:certificationNotes a owl:DatatypeProperty ;
-    rdfs:label "certification notes"@en ;
+    rdfs:label "certification notes" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 ontos:publicationScope a owl:DatatypeProperty ;
-    rdfs:label "publication scope"@en ;
-    rdfs:comment "Visibility scope: none, domain, organization, external"@en ;
+    rdfs:label "publication scope" ;
+    rdfs:comment "Visibility scope: none, domain, organization, external" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1263,8 +1263,8 @@ ontos:publicationScope a owl:DatatypeProperty ;
 # --- Dataset-specific ---
 
 ontos:datasetRole a owl:DatatypeProperty ;
-    rdfs:label "dataset role"@en ;
-    rdfs:comment "The business role of this dataset within its data product"@en ;
+    rdfs:label "dataset role" ;
+    rdfs:comment "The business role of this dataset within its data product" ;
     rdfs:domain ontos:Dataset ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1276,8 +1276,8 @@ ontos:datasetRole a owl:DatatypeProperty ;
 # --- Table / View ---
 
 ontos:physicalPath a owl:DatatypeProperty ;
-    rdfs:label "physical path"@en ;
-    rdfs:comment "Fully qualified path in the target system (e.g. catalog.schema.table)"@en ;
+    rdfs:label "physical path" ;
+    rdfs:comment "Fully qualified path in the target system (e.g. catalog.schema.table)" ;
     rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1286,8 +1286,8 @@ ontos:physicalPath a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:platform a owl:DatatypeProperty ;
-    rdfs:label "platform"@en ;
-    rdfs:comment "Data platform hosting this table or view"@en ;
+    rdfs:label "platform" ;
+    rdfs:comment "Data platform hosting this table or view" ;
     rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1297,8 +1297,8 @@ ontos:platform a owl:DatatypeProperty ;
     ontos:uiSelectOptions "databricks,snowflake,bigquery,redshift,postgres,s3,azure_storage,gcs" .
 
 ontos:environment a owl:DatatypeProperty ;
-    rdfs:label "environment"@en ;
-    rdfs:comment "Deployment environment"@en ;
+    rdfs:label "environment" ;
+    rdfs:comment "Deployment environment" ;
     rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1308,8 +1308,8 @@ ontos:environment a owl:DatatypeProperty ;
     ontos:uiSelectOptions "dev,qa,staging,prod" .
 
 ontos:tableRole a owl:DatatypeProperty ;
-    rdfs:label "table role"@en ;
-    rdfs:comment "Role of this table within its dataset"@en ;
+    rdfs:label "table role" ;
+    rdfs:comment "Role of this table within its dataset" ;
     rdfs:domain ontos:Table , ontos:View ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1321,8 +1321,8 @@ ontos:tableRole a owl:DatatypeProperty ;
 # --- Column ---
 
 ontos:columnDataType a owl:DatatypeProperty ;
-    rdfs:label "data type"@en ;
-    rdfs:comment "Data type of the column (e.g. STRING, INT, TIMESTAMP)"@en ;
+    rdfs:label "data type" ;
+    rdfs:comment "Data type of the column (e.g. STRING, INT, TIMESTAMP)" ;
     rdfs:domain ontos:Column ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1331,8 +1331,8 @@ ontos:columnDataType a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:isNullable a owl:DatatypeProperty ;
-    rdfs:label "is nullable"@en ;
-    rdfs:comment "Whether the column allows NULL values"@en ;
+    rdfs:label "is nullable" ;
+    rdfs:comment "Whether the column allows NULL values" ;
     rdfs:domain ontos:Column ;
     rdfs:range xsd:boolean ;
     ontos:uiFieldType "boolean" ;
@@ -1341,7 +1341,7 @@ ontos:isNullable a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:isPrimaryKey a owl:DatatypeProperty ;
-    rdfs:label "is primary key"@en ;
+    rdfs:label "is primary key" ;
     rdfs:domain ontos:Column ;
     rdfs:range xsd:boolean ;
     ontos:uiFieldType "boolean" ;
@@ -1350,8 +1350,8 @@ ontos:isPrimaryKey a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:classification a owl:DatatypeProperty ;
-    rdfs:label "classification"@en ;
-    rdfs:comment "Data classification level (e.g. public, internal, confidential, restricted)"@en ;
+    rdfs:label "classification" ;
+    rdfs:comment "Data classification level (e.g. public, internal, confidential, restricted)" ;
     rdfs:domain ontos:Column ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1363,8 +1363,8 @@ ontos:classification a owl:DatatypeProperty ;
 # --- Policy ---
 
 ontos:policyType a owl:DatatypeProperty ;
-    rdfs:label "policy type"@en ;
-    rdfs:comment "Category of governance policy"@en ;
+    rdfs:label "policy type" ;
+    rdfs:comment "Category of governance policy" ;
     rdfs:domain ontos:Policy ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1374,8 +1374,8 @@ ontos:policyType a owl:DatatypeProperty ;
     ontos:uiSelectOptions "access_privacy,data_quality,retention_lifecycle,usage_purpose,custom" .
 
 ontos:enforcementLevel a owl:DatatypeProperty ;
-    rdfs:label "enforcement level"@en ;
-    rdfs:comment "How strictly this policy is enforced"@en ;
+    rdfs:label "enforcement level" ;
+    rdfs:comment "How strictly this policy is enforced" ;
     rdfs:domain ontos:Policy ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1385,8 +1385,8 @@ ontos:enforcementLevel a owl:DatatypeProperty ;
     ontos:uiSelectOptions "advisory,mandatory,automated" .
 
 ontos:policyContent a owl:DatatypeProperty ;
-    rdfs:label "policy content"@en ;
-    rdfs:comment "The actual policy text or rules body"@en ;
+    rdfs:label "policy content" ;
+    rdfs:comment "The actual policy text or rules body" ;
     rdfs:domain ontos:Policy ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "textarea" ;
@@ -1397,8 +1397,8 @@ ontos:policyContent a owl:DatatypeProperty ;
 # --- BusinessTerm ---
 
 ontos:termDefinition a owl:DatatypeProperty ;
-    rdfs:label "definition"@en ;
-    rdfs:comment "Formal business definition of the term"@en ;
+    rdfs:label "definition" ;
+    rdfs:comment "Formal business definition of the term" ;
     rdfs:domain ontos:BusinessTerm ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "textarea" ;
@@ -1407,8 +1407,8 @@ ontos:termDefinition a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" .
 
 ontos:synonyms a owl:DatatypeProperty ;
-    rdfs:label "synonyms"@en ;
-    rdfs:comment "Alternative names or abbreviations for this term"@en ;
+    rdfs:label "synonyms" ;
+    rdfs:comment "Alternative names or abbreviations for this term" ;
     rdfs:domain ontos:BusinessTerm ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1417,8 +1417,8 @@ ontos:synonyms a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" .
 
 ontos:examples a owl:DatatypeProperty ;
-    rdfs:label "examples"@en ;
-    rdfs:comment "Usage examples for this term"@en ;
+    rdfs:label "examples" ;
+    rdfs:comment "Usage examples for this term" ;
     rdfs:domain ontos:BusinessTerm ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "textarea" ;
@@ -1429,8 +1429,8 @@ ontos:examples a owl:DatatypeProperty ;
 # --- Dashboard ---
 
 ontos:dashboardUrl a owl:DatatypeProperty ;
-    rdfs:label "dashboard URL"@en ;
-    rdfs:comment "URL to the dashboard in its BI platform"@en ;
+    rdfs:label "dashboard URL" ;
+    rdfs:comment "URL to the dashboard in its BI platform" ;
     rdfs:domain ontos:Dashboard ;
     rdfs:range xsd:anyURI ;
     ontos:uiFieldType "url" ;
@@ -1439,8 +1439,8 @@ ontos:dashboardUrl a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:dashboardPlatform a owl:DatatypeProperty ;
-    rdfs:label "platform"@en ;
-    rdfs:comment "BI platform hosting the dashboard"@en ;
+    rdfs:label "platform" ;
+    rdfs:comment "BI platform hosting the dashboard" ;
     rdfs:domain ontos:Dashboard ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1452,8 +1452,8 @@ ontos:dashboardPlatform a owl:DatatypeProperty ;
 # --- APIEndpoint ---
 
 ontos:endpointUrl a owl:DatatypeProperty ;
-    rdfs:label "endpoint URL"@en ;
-    rdfs:comment "URL pattern for the API endpoint"@en ;
+    rdfs:label "endpoint URL" ;
+    rdfs:comment "URL pattern for the API endpoint" ;
     rdfs:domain ontos:APIEndpoint ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1462,7 +1462,7 @@ ontos:endpointUrl a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:httpMethod a owl:DatatypeProperty ;
-    rdfs:label "HTTP method"@en ;
+    rdfs:label "HTTP method" ;
     rdfs:domain ontos:APIEndpoint ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1474,8 +1474,8 @@ ontos:httpMethod a owl:DatatypeProperty ;
 # --- Notebook ---
 
 ontos:notebookPath a owl:DatatypeProperty ;
-    rdfs:label "notebook path"@en ;
-    rdfs:comment "Workspace path to the notebook"@en ;
+    rdfs:label "notebook path" ;
+    rdfs:comment "Workspace path to the notebook" ;
     rdfs:domain ontos:Notebook ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1484,7 +1484,7 @@ ontos:notebookPath a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:notebookLanguage a owl:DatatypeProperty ;
-    rdfs:label "language"@en ;
+    rdfs:label "language" ;
     rdfs:domain ontos:Notebook ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1496,8 +1496,8 @@ ontos:notebookLanguage a owl:DatatypeProperty ;
 # --- MLModel ---
 
 ontos:modelRegistryName a owl:DatatypeProperty ;
-    rdfs:label "registry name"@en ;
-    rdfs:comment "Name of the model in the model registry"@en ;
+    rdfs:label "registry name" ;
+    rdfs:comment "Name of the model in the model registry" ;
     rdfs:domain ontos:MLModel ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1506,8 +1506,8 @@ ontos:modelRegistryName a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:modelFramework a owl:DatatypeProperty ;
-    rdfs:label "framework"@en ;
-    rdfs:comment "ML framework used (e.g. sklearn, pytorch, spark)"@en ;
+    rdfs:label "framework" ;
+    rdfs:comment "ML framework used (e.g. sklearn, pytorch, spark)" ;
     rdfs:domain ontos:MLModel ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1518,8 +1518,8 @@ ontos:modelFramework a owl:DatatypeProperty ;
 # --- Stream ---
 
 ontos:streamType a owl:DatatypeProperty ;
-    rdfs:label "stream type"@en ;
-    rdfs:comment "Type of streaming technology"@en ;
+    rdfs:label "stream type" ;
+    rdfs:comment "Type of streaming technology" ;
     rdfs:domain ontos:Stream ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1529,8 +1529,8 @@ ontos:streamType a owl:DatatypeProperty ;
     ontos:uiSelectOptions "kafka,kinesis,event_hub,pubsub,delta_live_tables" .
 
 ontos:topicName a owl:DatatypeProperty ;
-    rdfs:label "topic name"@en ;
-    rdfs:comment "Topic or stream name"@en ;
+    rdfs:label "topic name" ;
+    rdfs:comment "Topic or stream name" ;
     rdfs:domain ontos:Stream ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1541,8 +1541,8 @@ ontos:topicName a owl:DatatypeProperty ;
 # --- LogicalEntity ---
 
 ontos:entityDomain a owl:DatatypeProperty ;
-    rdfs:label "entity domain"@en ;
-    rdfs:comment "The business domain this logical entity belongs to (e.g. Customer, Sales, Finance)"@en ;
+    rdfs:label "entity domain" ;
+    rdfs:comment "The business domain this logical entity belongs to (e.g. Customer, Sales, Finance)" ;
     rdfs:domain ontos:LogicalEntity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1551,8 +1551,8 @@ ontos:entityDomain a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" .
 
 ontos:entitySupertype a owl:DatatypeProperty ;
-    rdfs:label "entity supertype"@en ;
-    rdfs:comment "Parent entity in the conceptual model hierarchy (e.g. Party for Customer/Supplier)"@en ;
+    rdfs:label "entity supertype" ;
+    rdfs:comment "Parent entity in the conceptual model hierarchy (e.g. Party for Customer/Supplier)" ;
     rdfs:domain ontos:LogicalEntity ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "text" ;
@@ -1563,8 +1563,8 @@ ontos:entitySupertype a owl:DatatypeProperty ;
 # --- LogicalAttribute ---
 
 ontos:attributeDataType a owl:DatatypeProperty ;
-    rdfs:label "logical data type"@en ;
-    rdfs:comment "Logical data type of the attribute (e.g. String, Integer, Date, Boolean)"@en ;
+    rdfs:label "logical data type" ;
+    rdfs:comment "Logical data type of the attribute (e.g. String, Integer, Date, Boolean)" ;
     rdfs:domain ontos:LogicalAttribute ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1574,8 +1574,8 @@ ontos:attributeDataType a owl:DatatypeProperty ;
     ontos:uiSelectOptions "String,Integer,Decimal,Boolean,Date,DateTime,Binary,Array,Map" .
 
 ontos:isIdentifier a owl:DatatypeProperty ;
-    rdfs:label "is identifier"@en ;
-    rdfs:comment "Whether this attribute serves as a business identifier for the entity"@en ;
+    rdfs:label "is identifier" ;
+    rdfs:comment "Whether this attribute serves as a business identifier for the entity" ;
     rdfs:domain ontos:LogicalAttribute ;
     rdfs:range xsd:boolean ;
     ontos:uiFieldType "boolean" ;
@@ -1584,8 +1584,8 @@ ontos:isIdentifier a owl:DatatypeProperty ;
     ontos:uiFieldGroup "basic" .
 
 ontos:sensitivityLevel a owl:DatatypeProperty ;
-    rdfs:label "sensitivity level"@en ;
-    rdfs:comment "Data sensitivity classification for this attribute"@en ;
+    rdfs:label "sensitivity level" ;
+    rdfs:comment "Data sensitivity classification for this attribute" ;
     rdfs:domain ontos:LogicalAttribute ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1597,8 +1597,8 @@ ontos:sensitivityLevel a owl:DatatypeProperty ;
 # --- DeliveryChannel ---
 
 ontos:channelType a owl:DatatypeProperty ;
-    rdfs:label "channel type"@en ;
-    rdfs:comment "Type of delivery mechanism"@en ;
+    rdfs:label "channel type" ;
+    rdfs:comment "Type of delivery mechanism" ;
     rdfs:domain ontos:DeliveryChannel ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1608,8 +1608,8 @@ ontos:channelType a owl:DatatypeProperty ;
     ontos:uiSelectOptions "dashboard,report,api,file_export,stream,data_share,embedded_analytics" .
 
 ontos:channelUrl a owl:DatatypeProperty ;
-    rdfs:label "channel URL"@en ;
-    rdfs:comment "Access URL for the delivery channel"@en ;
+    rdfs:label "channel URL" ;
+    rdfs:comment "Access URL for the delivery channel" ;
     rdfs:domain ontos:DeliveryChannel ;
     rdfs:range xsd:anyURI ;
     ontos:uiFieldType "url" ;
@@ -1618,8 +1618,8 @@ ontos:channelUrl a owl:DatatypeProperty ;
     ontos:uiFieldGroup "technical" .
 
 ontos:channelFormat a owl:DatatypeProperty ;
-    rdfs:label "output format"@en ;
-    rdfs:comment "Data format delivered by the channel"@en ;
+    rdfs:label "output format" ;
+    rdfs:comment "Data format delivered by the channel" ;
     rdfs:domain ontos:DeliveryChannel ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1629,8 +1629,8 @@ ontos:channelFormat a owl:DatatypeProperty ;
     ontos:uiSelectOptions "json,csv,parquet,delta,avro,html,pdf,excel" .
 
 ontos:refreshFrequency a owl:DatatypeProperty ;
-    rdfs:label "refresh frequency"@en ;
-    rdfs:comment "How often the delivery channel is updated"@en ;
+    rdfs:label "refresh frequency" ;
+    rdfs:comment "How often the delivery channel is updated" ;
     rdfs:domain ontos:DeliveryChannel ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1642,8 +1642,8 @@ ontos:refreshFrequency a owl:DatatypeProperty ;
 # --- System ---
 
 ontos:systemType a owl:DatatypeProperty ;
-    rdfs:label "system type"@en ;
-    rdfs:comment "Category of the external system"@en ;
+    rdfs:label "system type" ;
+    rdfs:comment "Category of the external system" ;
     rdfs:domain ontos:System ;
     rdfs:range xsd:string ;
     ontos:uiFieldType "select" ;
@@ -1653,8 +1653,8 @@ ontos:systemType a owl:DatatypeProperty ;
     ontos:uiSelectOptions "data_warehouse,data_lake,crm,erp,bi_platform,messaging,custom" .
 
 ontos:systemUrl a owl:DatatypeProperty ;
-    rdfs:label "system URL"@en ;
-    rdfs:comment "Base URL or connection endpoint for the system"@en ;
+    rdfs:label "system URL" ;
+    rdfs:comment "Base URL or connection endpoint for the system" ;
     rdfs:domain ontos:System ;
     rdfs:range xsd:anyURI ;
     ontos:uiFieldType "url" ;
@@ -1670,136 +1670,136 @@ ontos:systemUrl a owl:DatatypeProperty ;
 # ############################################################################
 
 ontos:memberType a owl:DatatypeProperty ;
-    rdfs:label "member type"@en ;
-    rdfs:comment "Type of team member (user or group)"@en ;
+    rdfs:label "member type" ;
+    rdfs:comment "Type of team member (user or group)" ;
     rdfs:domain ontos:TeamMember ;
     rdfs:range xsd:string ;
     skos:example "user, group" .
 
 ontos:memberIdentifier a owl:DatatypeProperty ;
-    rdfs:label "member identifier"@en ;
-    rdfs:comment "Email for users, name for groups"@en ;
+    rdfs:label "member identifier" ;
+    rdfs:comment "Email for users, name for groups" ;
     rdfs:domain ontos:TeamMember ;
     rdfs:range xsd:string .
 
 ontos:roleOverride a owl:DatatypeProperty ;
-    rdfs:label "role override"@en ;
-    rdfs:comment "Optional application role override for team member"@en ;
+    rdfs:label "role override" ;
+    rdfs:comment "Optional application role override for team member" ;
     rdfs:domain ontos:TeamMember ;
     rdfs:range xsd:string .
 
 ontos:physicalName a owl:DatatypeProperty ;
-    rdfs:label "physical name"@en ;
-    rdfs:comment "Physical implementation name (e.g., table name, column name)"@en ;
+    rdfs:label "physical name" ;
+    rdfs:comment "Physical implementation name (e.g., table name, column name)" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 # --- Semantic link data properties ---
 
 ontos:conceptIRI a owl:DatatypeProperty ;
-    rdfs:label "concept IRI"@en ;
+    rdfs:label "concept IRI" ;
     rdfs:domain ontos:SemanticLink ;
     rdfs:range xsd:anyURI .
 
 ontos:conceptLabel a owl:DatatypeProperty ;
-    rdfs:label "concept label"@en ;
+    rdfs:label "concept label" ;
     rdfs:domain ontos:SemanticLink ;
     rdfs:range xsd:string .
 
 ontos:linkingContext a owl:DatatypeProperty ;
-    rdfs:label "linking context"@en ;
+    rdfs:label "linking context" ;
     rdfs:domain ontos:SemanticLink ;
     rdfs:range xsd:string .
 
 # --- Ownership data properties ---
 
 ontos:ownershipUser a owl:DatatypeProperty ;
-    rdfs:label "ownership user"@en ;
+    rdfs:label "ownership user" ;
     rdfs:domain ontos:Ownership ;
     rdfs:range xsd:anyURI ;
     skos:example "urn:user:alice@company.com" .
 
 ontos:ownershipRole a owl:DatatypeProperty ;
-    rdfs:label "ownership role"@en ;
+    rdfs:label "ownership role" ;
     rdfs:domain ontos:Ownership ;
     rdfs:range xsd:string ;
     skos:example "business_owner, data_steward, technical_owner, sme, contributor" .
 
 ontos:ownershipAssignedAt a owl:DatatypeProperty ;
-    rdfs:label "ownership assigned at"@en ;
+    rdfs:label "ownership assigned at" ;
     rdfs:domain ontos:Ownership ;
     rdfs:range xsd:dateTime .
 
 ontos:ownershipAssignedBy a owl:DatatypeProperty ;
-    rdfs:label "ownership assigned by"@en ;
+    rdfs:label "ownership assigned by" ;
     rdfs:domain ontos:Ownership ;
     rdfs:range xsd:anyURI .
 
 # --- Knowledge collection data properties ---
 
 ontos:collectionType a owl:DatatypeProperty ;
-    rdfs:label "collection type"@en ;
+    rdfs:label "collection type" ;
     rdfs:domain ontos:KnowledgeCollection ;
     rdfs:range xsd:string ;
     skos:example "glossary, taxonomy, ontology" .
 
 ontos:scopeLevel a owl:DatatypeProperty ;
-    rdfs:label "scope level"@en ;
+    rdfs:label "scope level" ;
     rdfs:domain ontos:KnowledgeCollection ;
     rdfs:range xsd:string ;
     skos:example "enterprise, domain, department, team, project, external" .
 
 ontos:parentCollection a owl:ObjectProperty ;
-    rdfs:label "parent collection"@en ;
+    rdfs:label "parent collection" ;
     rdfs:domain ontos:KnowledgeCollection ;
     rdfs:range ontos:KnowledgeCollection .
 
 ontos:isEditable a owl:DatatypeProperty ;
-    rdfs:label "is editable"@en ;
+    rdfs:label "is editable" ;
     rdfs:domain ontos:KnowledgeCollection ;
     rdfs:range xsd:boolean .
 
 ontos:sourceType a owl:DatatypeProperty ;
-    rdfs:label "source type"@en ;
+    rdfs:label "source type" ;
     rdfs:domain ontos:KnowledgeCollection ;
     rdfs:range xsd:string ;
     skos:example "custom, imported" .
 
 ontos:sourceUrl a owl:DatatypeProperty ;
-    rdfs:label "source URL"@en ;
+    rdfs:label "source URL" ;
     rdfs:domain ontos:KnowledgeCollection ;
     rdfs:range xsd:anyURI .
 
 # --- Review / Provenance (existing) ---
 
 ontos:reviewRequestId a owl:DatatypeProperty ;
-    rdfs:label "review request ID"@en ;
+    rdfs:label "review request ID" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string .
 
 ontos:sourceConceptIri a owl:DatatypeProperty ;
-    rdfs:label "source concept IRI"@en ;
+    rdfs:label "source concept IRI" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:anyURI .
 
 ontos:sourceCollectionIri a owl:DatatypeProperty ;
-    rdfs:label "source collection IRI"@en ;
+    rdfs:label "source collection IRI" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:anyURI .
 
 ontos:promotionType a owl:DatatypeProperty ;
-    rdfs:label "promotion type"@en ;
+    rdfs:label "promotion type" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:string ;
     skos:example "promoted, demoted, migrated" .
 
 ontos:promotedAt a owl:DatatypeProperty ;
-    rdfs:label "promoted at"@en ;
+    rdfs:label "promoted at" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:dateTime .
 
 ontos:promotedBy a owl:DatatypeProperty ;
-    rdfs:label "promoted by"@en ;
+    rdfs:label "promoted by" ;
     rdfs:domain ontos:Entity ;
     rdfs:range xsd:anyURI .
 

@@ -55,7 +55,7 @@ class TestODCSExportValidation:
                 },
                 "tenant": "ClimateQuantumInc",
                 "kind": "DataContract",
-                "apiVersion": "v3.1.0",
+                "apiVersion": "v3.0.2",
                 "servers": [
                     {
                         "server": "my-postgres",
@@ -224,7 +224,7 @@ class TestODCSExportValidation:
             id="53581432-6c55-4ba2-a65f-72344a91553a",
             name="my quantum",
             kind="DataContract",
-            api_version="v3.1.0",
+            api_version="v3.0.2",
             version="1.1.0",
             status="active",
             owner_team_id=None,
@@ -460,7 +460,7 @@ class TestODCSExportValidation:
 
         # Test specific values
         assert odcs_data['kind'] == "DataContract"
-        assert odcs_data['apiVersion'] == "v3.1.0"
+        assert odcs_data['apiVersion'] == "v3.0.2"
         assert odcs_data['version'] == "1.1.0"
         assert odcs_data['status'] == "active"
         assert odcs_data['name'] == "my quantum"

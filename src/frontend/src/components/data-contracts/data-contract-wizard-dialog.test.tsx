@@ -103,7 +103,7 @@ describe('DataContractWizardDialog Schema Inference', () => {
     )
 
     expect(screen.getByText(/Data Contract Wizard/i)).toBeInTheDocument()
-    expect(screen.getByText('Build a contract incrementally according to ODCS v3.1.0')).toBeInTheDocument()
+    expect(screen.getByText('Build a contract incrementally according to ODCS v3.0.2')).toBeInTheDocument()
   })
 
   it('should handle schema inference from UC dataset', async () => {

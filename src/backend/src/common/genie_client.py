@@ -1,12 +1,13 @@
 """
 Genie Spaces Client
 
-This module provides utility functions for integrating with Databricks Genie Spaces API.
-Handles space creation, dataset collection, and metadata formatting.
+Provides functions for creating Databricks Genie Spaces from Data Products.
+Uses the ``/api/2.0/data-rooms/`` REST API with separate calls for
+instructions and sample questions.
 """
 
-from databricks.sdk import WorkspaceClient
 from typing import List, Dict, Optional, Any
+from databricks.sdk import WorkspaceClient
 from sqlalchemy.orm import Session
 
 from src.common.logging import get_logger
@@ -14,78 +15,158 @@ from src.common.logging import get_logger
 logger = get_logger(__name__)
 
 
-async def create_genie_space(
+def create_genie_space(
     ws_client: WorkspaceClient,
     name: str,
     datasets: List[str],
+    warehouse_id: str,
     description: Optional[str] = None,
-    instructions: Optional[str] = None
+    instructions: Optional[str] = None,
+    sample_questions: Optional[List] = None,
+    join_sqls: Optional[List[Dict[str, str]]] = None,
 ) -> Dict[str, Any]:
     """
-    Create a Genie Space using Databricks API.
+    Create a Genie Space using the data-rooms REST API.
+
+    Steps:
+      1. POST /api/2.0/data-rooms/ with table_identifiers
+      2. POST text instructions (domain context, tables)
+      3. POST SQL instructions for joins
+      4. POST SQL instructions for example queries
+      5. POST sample questions
 
     Args:
         ws_client: Databricks workspace client
         name: Space display name
         datasets: List of catalog.schema.table identifiers
+        warehouse_id: SQL warehouse ID for the space
         description: Optional space description
-        instructions: Optional context/instructions (metadata)
+        instructions: Optional context/instructions text
+        sample_questions: Optional list of sample question strings
 
     Returns:
         Dict with space_id, space_url, status
 
     Raises:
+        ValueError: If no datasets provided or warehouse_id missing
         Exception: On API failure
     """
+    if not datasets:
+        raise ValueError("At least one dataset is required to create a Genie Space")
+    if not warehouse_id:
+        raise ValueError("warehouse_id is required to create a Genie Space")
+
+    logger.info(f"Creating Genie Space '{name}' with {len(datasets)} datasets on warehouse {warehouse_id}")
+
+    # Build rich description: the description field is the PRIMARY way to configure
+    # Genie's understanding of the data. Joins, SQL patterns, and business rules
+    # go here — Genie auto-discovers table relationships from this context.
+    full_description = description or ""
+    if instructions:
+        full_description = instructions[:4000]
+        if description:
+            full_description = f"{description}\n\n{instructions[:3500]}"
+
+    # Step 1: Create space via data-rooms API
+    payload = {
+        "display_name": name,
+        "warehouse_id": warehouse_id,
+        "table_identifiers": datasets,
+        "run_as_type": "VIEWER",
+    }
+    if full_description:
+        payload["description"] = full_description[:4000]
+
     try:
-        # API Reference: https://docs.databricks.com/api/workspace/genie/createspace
-        payload = {
-            "display_name": name,
-            "description": description or "",
-        }
+        result = ws_client.api_client.do('POST', '/api/2.0/data-rooms/', body=payload)
+        space_id = result.get('space_id') or result.get('id')
 
-        # Add dataset references
-        if datasets:
-            # Format datasets for Genie API (format may vary based on actual API)
-            payload["tables"] = [{"full_name": ds} for ds in datasets]
-
-        # Add instructions/context (truncate to safe length)
-        if instructions:
-            payload["instructions"] = instructions[:5000]
-
-        logger.info(f"Creating Genie Space with {len(datasets)} datasets: {name}")
-        logger.debug(f"Genie Space payload: {payload}")
-
-        # Call Databricks Genie Spaces API
-        response = ws_client.api_client.do(
-            method='POST',
-            path='/api/2.0/genie/spaces',
-            body=payload,
-            headers={'Content-Type': 'application/json'}
-        )
-
-        # Extract space ID and URL from response
-        space_id = response.get('space_id') or response.get('id')
         if not space_id:
             raise ValueError("No space_id returned from Genie API")
 
-        workspace_url = ws_client.config.host
-        # Remove trailing slash if present
-        workspace_url = workspace_url.rstrip('/')
-        space_url = f"{workspace_url}/genie/{space_id}"
+        logger.info(f"Created Genie Space: {space_id}")
 
-        logger.info(f"Successfully created Genie Space: {space_id}")
+        # Step 2: Add sample questions
+        if sample_questions:
+            added = 0
+            for q in sample_questions:
+                question_text = q.get("question", str(q)) if isinstance(q, dict) else str(q)
+                try:
+                    ws_client.api_client.do(
+                        'POST',
+                        f'/api/2.0/data-rooms/{space_id}/curated-questions',
+                        body={
+                            "curated_question": {
+                                "question_text": question_text,
+                                "question_type": "SAMPLE_QUESTION",
+                            }
+                        },
+                    )
+                    added += 1
+                except Exception as e:
+                    logger.warning(f"Failed to add sample question to space {space_id}: {e}")
+            logger.info(f"Added {added}/{len(sample_questions)} sample questions to Genie Space {space_id}")
+
+        workspace_url = ws_client.config.host.rstrip('/')
+        space_url = f"{workspace_url}/genie/rooms/{space_id}"
+
         logger.info(f"Genie Space URL: {space_url}")
 
         return {
             'space_id': space_id,
             'space_url': space_url,
-            'status': 'active'
+            'status': 'active',
         }
 
     except Exception as e:
         logger.error(f"Failed to create Genie Space: {e}", exc_info=True)
         raise
+
+
+def delete_genie_space(ws_client: WorkspaceClient, space_id: str) -> None:
+    """Delete a Genie Space from Databricks.
+
+    Args:
+        ws_client: Databricks workspace client
+        space_id: The Genie space ID to delete
+    """
+    logger.info(f"Deleting Genie Space: {space_id}")
+    ws_client.api_client.do('DELETE', f'/api/2.0/data-rooms/{space_id}')
+    logger.info(f"Deleted Genie Space: {space_id}")
+
+
+def update_genie_space_instructions(
+    ws_client: WorkspaceClient, space_id: str, instructions: str
+) -> None:
+    """Replace all instructions on a Genie Space.
+
+    Deletes existing instructions then adds the new one.
+
+    Args:
+        ws_client: Databricks workspace client
+        space_id: The Genie space ID
+        instructions: New instruction text
+    """
+    # Delete existing instructions
+    try:
+        existing = ws_client.api_client.do(
+            'GET', f'/api/2.0/data-rooms/{space_id}/instructions'
+        )
+        for instr in existing.get('instructions', []):
+            ws_client.api_client.do(
+                'DELETE',
+                f'/api/2.0/data-rooms/{space_id}/instructions/{instr["id"]}',
+            )
+    except Exception:
+        pass
+
+    # Add new instructions
+    ws_client.api_client.do(
+        'POST',
+        f'/api/2.0/data-rooms/{space_id}/instructions',
+        body={"instruction_text": instructions[:5000]},
+    )
+    logger.info(f"Updated instructions for Genie Space {space_id}")
 
 
 def collect_datasets_from_products(product_ids: List[str], db: Session) -> List[str]:
@@ -122,7 +203,6 @@ def collect_datasets_from_products(product_ids: List[str], db: Session) -> List[
 
         except Exception as e:
             logger.error(f"Error collecting datasets from product {product_id}: {e}", exc_info=True)
-            # Continue processing other products
 
     # Deduplicate while preserving order
     unique_datasets = list(dict.fromkeys(datasets))
@@ -176,7 +256,6 @@ def collect_rich_text_metadata(product_ids: List[str], db: Session) -> Dict[str,
 
         except Exception as e:
             logger.error(f"Error collecting metadata for product {product_id}: {e}", exc_info=True)
-            # Continue processing other products
 
     logger.info(f"Collected metadata for {len(metadata_map)} entities")
     return metadata_map
@@ -201,15 +280,12 @@ def format_metadata_for_genie(
     sections = []
     logger.info(f"Formatting metadata for {len(products)} products")
 
-    # Add product information
     for product in products:
         section_parts = [f"## Data Product: {product.name}\n"]
 
-        # Add product description if available
         if hasattr(product, 'description') and product.description:
             section_parts.append(f"**Description**: {product.description}\n")
 
-        # Add product domain if available
         if hasattr(product, 'domain') and product.domain:
             section_parts.append(f"**Domain**: {product.domain}\n")
 
@@ -224,7 +300,6 @@ def format_metadata_for_genie(
                     section_parts.append(f"{meta.short_description}\n\n")
 
                 if meta.content_markdown:
-                    # Limit individual content to reasonable size
                     content = meta.content_markdown
                     if len(content) > 1000:
                         content = content[:997] + "..."
@@ -232,13 +307,11 @@ def format_metadata_for_genie(
 
         sections.append("".join(section_parts))
 
-    # Combine all sections
     formatted = "\n".join(sections)
 
-    # Truncate if needed
     if len(formatted) > max_length:
         formatted = formatted[:max_length - 3] + "..."
-        logger.warning(f"Metadata truncated from {len(formatted)} to {max_length} characters")
+        logger.warning(f"Metadata truncated to {max_length} characters")
 
     logger.info(f"Formatted metadata: {len(formatted)} characters")
     return formatted

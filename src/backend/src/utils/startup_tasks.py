@@ -30,6 +30,7 @@ from src.controller.tags_manager import TagsManager # Import TagsManager
 from src.controller.semantic_models_manager import SemanticModelsManager
 from src.controller.teams_manager import TeamsManager
 from src.controller.projects_manager import ProjectsManager
+from src.controller.datasets_manager import DatasetsManager
 
 # Import repositories (needed for manager instantiation)
 from src.repositories.settings_repository import AppRoleRepository
@@ -290,6 +291,10 @@ def initialize_managers(app: FastAPI):
             app.state.data_contracts_manager = DataContractsManager(data_dir=data_dir, tags_manager=tags_manager)
             logger.info("DataContractsManager initialized with TagsManager integration.")
             
+            # Instantiate DatasetsManager with TagsManager dependency
+            app.state.datasets_manager = DatasetsManager(db=db_session, ws_client=ws_client, tags_manager=tags_manager)
+            logger.info("DatasetsManager initialized with TagsManager integration.")
+
             # Ensure default tag namespace exists (using a new session for this setup task)
             with session_factory() as setup_db:
                 try:

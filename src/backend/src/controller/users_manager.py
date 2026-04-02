@@ -72,6 +72,20 @@ class UsersManager:
             else:
                 logger.info(f"No group information found for {user_email} in SDK response.")
 
+            # Fallback: if SCIM returns no groups (common with FEVM/service principal),
+            # use APP_DEFAULT_USER_GROUPS env var to assign a default group set.
+            if not group_names:
+                import os
+                default_groups_str = os.environ.get('APP_DEFAULT_USER_GROUPS', '')
+                if default_groups_str:
+                    try:
+                        import json as _json
+                        group_names = _json.loads(default_groups_str)
+                        logger.info(f"Using APP_DEFAULT_USER_GROUPS fallback for {user_email}: {group_names}")
+                    except Exception:
+                        group_names = [g.strip() for g in default_groups_str.split(',') if g.strip()]
+                        logger.info(f"Using APP_DEFAULT_USER_GROUPS fallback (comma-separated) for {user_email}: {group_names}")
+
             # Map DatabricksUser fields to UserInfo model
             user_info_response = UserInfo(
                 email=(databricks_user.emails[0].value if databricks_user.emails else databricks_user.user_name),

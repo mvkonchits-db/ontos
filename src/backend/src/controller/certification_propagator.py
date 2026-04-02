@@ -1,7 +1,7 @@
 """BFS certification inheritance propagator.
 
 Propagates certification levels downward through entity relationships.
-Uses a transitive BFS: DataProduct -> DataContract -> Asset.
+Uses a transitive BFS: DataProduct -> DataContract -> Dataset -> Asset.
 
 The effective certification level is max(own, inherited).
 """
@@ -26,6 +26,7 @@ INHERITANCE_RELATIONSHIPS = {
 ENTITY_TABLE_MAP = {
     "DataProduct": "data_products",
     "DataContract": "data_contracts",
+    "Dataset": "datasets",
     "Asset": "assets",
 }
 

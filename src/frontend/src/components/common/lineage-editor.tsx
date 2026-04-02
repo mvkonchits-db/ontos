@@ -14,9 +14,7 @@ import {
   Link2, Database, Package, Shield, Send, BookOpen, Tag,
   Shapes, AlertCircle,
 } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
 import { useToast } from '@/hooks/use-toast';
-import { useFormatLabel } from '@/lib/format-label';
 import type { RelationshipDefinition, EntityRelationships } from '@/types/ontology-schema';
 
 interface LinkCandidate {
@@ -70,8 +68,6 @@ export function LineageEditor({
   onSuccess,
 }: LineageEditorProps) {
   const { toast } = useToast();
-  const { i18n } = useTranslation();
-  const formatLabel = useFormatLabel();
   const [currentStep, setCurrentStep] = useState(0);
   const [pendingRelationships, setPendingRelationships] = useState<PendingRelationship[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -82,11 +78,11 @@ export function LineageEditor({
   const steps = useMemo(() => [
     ...relationships.map(rel => ({
       id: rel.property_name,
-      label: formatLabel(rel.label),
+      label: rel.label,
       relationship: rel,
     })),
     { id: 'review', label: 'Review & Save', relationship: null },
-  ], [relationships, formatLabel]);
+  ], [relationships]);
 
   const isReviewStep = currentStep === steps.length - 1;
 
@@ -100,7 +96,7 @@ export function LineageEditor({
       setIsLoadingSchema(true);
       try {
         const iri = `http://ontos.app/ontology#${entityType}`;
-        const res = await fetch(`/api/ontology/entity-types/relationships?type_iri=${encodeURIComponent(iri)}&lang=${encodeURIComponent(i18n.language)}`);
+        const res = await fetch(`/api/ontology/entity-types/relationships?type_iri=${encodeURIComponent(iri)}`);
         if (!res.ok) throw new Error(`Failed to load relationships (${res.status})`);
         const data: EntityRelationships = await res.json();
         setRelationships([...data.outgoing, ...data.incoming]);
@@ -307,7 +303,6 @@ function CandidateSearchStep({
   const [candidates, setCandidates] = useState<LinkCandidate[]>([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  const formatLabel = useFormatLabel();
   const targetType = relationship.target_type_label || relationship.target_type_iri.split('#').pop() || '';
 
   useEffect(() => {
@@ -366,7 +361,7 @@ function CandidateSearchStep({
     onAddRelationship(rel);
   };
 
-  const searchLabel = formatLabel(relationship.label) || targetType;
+  const searchLabel = relationship.label || targetType;
 
   return (
     <div className="space-y-3">

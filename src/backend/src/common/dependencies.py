@@ -20,6 +20,7 @@ from src.controller.search_manager import SearchManager
 from src.controller.tags_manager import TagsManager # Import TagsManager
 from src.controller.workspace_manager import WorkspaceManager # Import WorkspaceManager
 from src.controller.change_log_manager import ChangeLogManager # Import ChangeLogManager
+from src.controller.datasets_manager import DatasetsManager # Import DatasetsManager
 from src.controller.assets_manager import AssetsManager
 from src.controller.business_roles_manager import BusinessRolesManager
 from src.controller.business_owners_manager import BusinessOwnersManager
@@ -50,6 +51,7 @@ from src.common.manager_dependencies import (
     get_search_manager,
     get_workspace_manager,
     get_change_log_manager,
+    get_datasets_manager,
     get_assets_manager,
     get_business_roles_manager,
     get_business_owners_manager,
@@ -127,6 +129,7 @@ SemanticModelsManagerDep = Annotated[SemanticModelsManager, Depends(get_semantic
 SearchManagerDep = Annotated[SearchManager, Depends(get_search_manager)]
 WorkspaceManagerDep = Annotated[WorkspaceManager, Depends(get_workspace_manager)]
 ChangeLogManagerDep = Annotated[ChangeLogManager, Depends(get_change_log_manager)]
+DatasetsManagerDep = Annotated[DatasetsManager, Depends(get_datasets_manager)]
 AssetsManagerDep = Annotated[AssetsManager, Depends(get_assets_manager)]
 BusinessRolesManagerDep = Annotated[BusinessRolesManager, Depends(get_business_roles_manager)]
 BusinessOwnersManagerDep = Annotated[BusinessOwnersManager, Depends(get_business_owners_manager)]

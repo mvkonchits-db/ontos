@@ -1423,7 +1423,7 @@ async def upload_contract(
 async def get_odcs_schema(_perm: bool = Depends(PermissionChecker('data-contracts', FeatureAccessLevel.READ_ONLY))):
     try:
         from pathlib import Path
-        schema_path = Path(__file__).parent.parent / 'schemas' / 'odcs-json-schema-v3.1.0.json'
+        schema_path = Path(__file__).parent.parent / 'schemas' / 'odcs_v3.json'
         with open(schema_path, 'r') as f:
             data = json.load(f)
         return data

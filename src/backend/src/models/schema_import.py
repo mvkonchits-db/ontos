@@ -57,8 +57,6 @@ class ImportRequest(BaseModel):
     selected_paths: List[str] = Field(..., min_length=1, description="Dot-separated paths of selected nodes")
     depth: ImportDepth = Field(ImportDepth.FULL_RECURSIVE, description="How deep to recurse below selected nodes")
     dry_run: bool = Field(False, description="If true, only preview — do not create assets")
-    excluded_paths: List[str] = Field(default_factory=list, description="Paths the user chose to exclude from import")
-    path_mappings: Dict[str, UUID] = Field(default_factory=dict, description="Map preview path to an existing asset ID instead of creating a new one")
 
 
 class ImportPreviewItem(BaseModel):
@@ -69,7 +67,6 @@ class ImportPreviewItem(BaseModel):
     will_create: bool = Field(True, description="True if a new asset will be created, False if it already exists")
     existing_asset_id: Optional[UUID] = Field(None, description="ID of the existing asset if will_create is False")
     parent_path: Optional[str] = Field(None, description="Path of the parent node (for relationship creation)")
-    is_ancestor: bool = Field(False, description="True for auto-included structural parents (System, Catalog, Schema)")
 
 
 class ImportResultItem(BaseModel):

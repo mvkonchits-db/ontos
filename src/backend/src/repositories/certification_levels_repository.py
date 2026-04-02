@@ -98,7 +98,7 @@ class CertificationLevelsRepository:
     def count_entities_using_level(self, db: Session, level_order: int) -> int:
         """Count how many entities reference this certification level."""
         total = 0
-        tables_to_check = ["data_products", "data_contracts", "assets"]
+        tables_to_check = ["data_products", "data_contracts", "datasets", "assets"]
         for table_name in tables_to_check:
             try:
                 from sqlalchemy import text

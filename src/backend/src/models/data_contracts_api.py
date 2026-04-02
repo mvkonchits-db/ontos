@@ -49,7 +49,7 @@ class ColumnProperty(BaseModel):
     semanticConcepts: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
     authoritativeDefinitions: Optional[List[Dict[str, Any]]] = Field(default_factory=list)
 
-    # ODCS additional property fields
+    # ODCS v3.0.2 additional property fields
     businessName: Optional[str] = None
     encryptedName: Optional[str] = None
     criticalDataElement: Optional[bool] = None
@@ -69,7 +69,7 @@ class SchemaObject(BaseModel):
     properties: List[ColumnProperty] = Field(default_factory=list)
     propertyCount: Optional[int] = Field(0, description="Total number of properties (columns) in this schema object")
 
-    # ODCS additional schema object fields
+    # ODCS v3.0.2 additional schema object fields
     businessName: Optional[str] = None
     physicalType: Optional[str] = None  # table, view, etc.
     description: Optional[str] = None
@@ -132,7 +132,7 @@ class QualityRule(BaseModel):
 
 
 class TeamMember(BaseModel):
-    """ODCS Team Member"""
+    """ODCS v3.0.2 Team Member"""
     # Core ODCS fields
     username: str  # Required by ODCS - maps to email/identifier
     role: str  # 'steward', 'consumer', 'expert', 'admin', etc.
@@ -168,7 +168,7 @@ class AccessControl(BaseModel):
 
 
 class SupportChannel(BaseModel):
-    """ODCS Support Channel"""
+    """ODCS v3.0.2 Support Channel"""
     channel: str
     url: str
     description: Optional[str] = None
@@ -188,7 +188,7 @@ class SupportChannels(BaseModel):
 
 
 class PricingInfo(BaseModel):
-    """ODCS Pricing Information"""
+    """ODCS v3.0.2 Pricing Information"""
     priceAmount: Optional[Union[int, float]] = None
     priceCurrency: Optional[str] = None  # USD, EUR, etc.
     priceUnit: Optional[str] = None  # megabyte, record, etc.
@@ -198,7 +198,7 @@ class PricingInfo(BaseModel):
 
 
 class ContractRole(BaseModel):
-    """ODCS Role Definition"""
+    """ODCS v3.0.2 Role Definition"""
     role: str
     description: Optional[str] = None
     access: Optional[str] = None  # read, write, etc.
@@ -216,7 +216,7 @@ class AuthoritativeDefinition(BaseModel):
 
 
 class SLAProperty(BaseModel):
-    """ODCS SLA Property"""
+    """ODCS v3.0.2 SLA Property"""
     property: str
     value: Union[str, int, float]
     valueExt: Optional[Union[str, int, float]] = None
@@ -236,7 +236,7 @@ class SLARequirements(BaseModel):
     data_freshness_minutes: Optional[int] = Field(None, alias='dataFreshnessMinutes')
 
 
-# ODCS Server Types
+# ODCS v3.0.2 Server Types
 ODCS_SERVER_TYPES = [
     "api", "athena", "azure", "bigquery", "clickhouse", "databricks", "denodo", "dremio",
     "duckdb", "glue", "cloudsql", "db2", "informix", "kafka", "kinesis", "local",
@@ -270,9 +270,9 @@ class ServerConfig(BaseModel):
 
 # Full ODCS Contract Structure
 class ODCSContract(BaseModel):
-    """ODCS v3.1.0 compliant contract structure"""
+    """ODCS v3.0.2 compliant contract structure"""
     kind: str = 'DataContract'  # Required by ODCS
-    apiVersion: str = Field('v3.1.0', alias='api_version')  # Required by ODCS
+    apiVersion: str = Field('v3.0.2', alias='api_version')  # Required by ODCS
     id: str  # Required by ODCS
     version: str  # Required by ODCS
     status: str  # Required by ODCS
@@ -285,14 +285,14 @@ class ODCSContract(BaseModel):
     owner_team_id: Optional[str] = None  # No alias - always serializes as owner_team_id
     description: Optional[ContractDescription] = None
 
-    # ODCS top-level fields
+    # ODCS v3.0.2 top-level fields
     tags: Optional[List[AssignedTag]] = Field(default_factory=list)
     contractCreatedTs: Optional[str] = None  # ISO datetime string
 
     # Schema section
     contract_schema: List[SchemaObject] = Field(default_factory=list, alias="schema")
 
-    # SLA section (ODCS structure)
+    # SLA section (ODCS v3.0.2 structure)
     slaDefaultElement: Optional[str] = None
     slaProperties: Optional[List[SLAProperty]] = Field(default_factory=list)
     sla: Optional[SLARequirements] = None  # Legacy structure
@@ -305,7 +305,7 @@ class ODCSContract(BaseModel):
     roles: Optional[List[ContractRole]] = Field(default_factory=list)  # ODCS roles
     access_control: Optional[AccessControl] = Field(None, alias='accessControl')  # Legacy
 
-    # Support section (ODCS structure)
+    # Support section (ODCS v3.0.2 structure)
     support: Union[List[SupportChannel], SupportChannels, None] = None
 
     # Infrastructure section
@@ -328,7 +328,7 @@ class DataContractBase(BaseModel):
     owner_team_id: Optional[str] = None  # No alias - always serializes as owner_team_id
     project_id: Optional[str] = None  # Project association
     kind: str = Field('DataContract')  # Required by ODCS
-    apiVersion: str = Field('v3.1.0', alias='api_version')  # Required by ODCS
+    apiVersion: str = Field('v3.0.2', alias='api_version')  # Required by ODCS
     domainId: Optional[str] = Field(None, alias='domain_id')
     tenant: Optional[str] = None
     dataProduct: Optional[str] = Field(None, alias='data_product')
@@ -346,11 +346,11 @@ class DataContractCreate(DataContractBase):
     description: Optional[ContractDescription] = None
     contract_schema: Optional[List[SchemaObject]] = Field(None, alias="schema")
 
-    # ODCS top-level fields
+    # ODCS v3.0.2 top-level fields
     tags: Optional[List[AssignedTagCreate]] = Field(default_factory=list)
     contractCreatedTs: Optional[str] = None
 
-    # SLA section (ODCS structure)
+    # SLA section (ODCS v3.0.2 structure)
     slaDefaultElement: Optional[str] = None
     slaProperties: Optional[List[SLAProperty]] = Field(default_factory=list)
     sla: Optional[SLARequirements] = None  # Legacy structure
@@ -363,7 +363,7 @@ class DataContractCreate(DataContractBase):
     roles: Optional[List[ContractRole]] = Field(default_factory=list)
     access_control: Optional[AccessControl] = Field(None, alias='accessControl')  # Legacy
 
-    # Support section (ODCS structure)
+    # Support section (ODCS v3.0.2 structure)
     support: Union[List[SupportChannel], SupportChannels, None] = None
 
     # Infrastructure section
@@ -437,21 +437,21 @@ class DataContractRead(BaseModel):
     project_name: Optional[str] = None  # Resolved at query time
     kind: str = Field('DataContract')  # Required by ODCS
     # Ensure JSON uses camelCase key 'apiVersion' so frontend reads it
-    apiVersion: str = Field('v3.1.0', alias='apiVersion')  # Required by ODCS
+    apiVersion: str = Field('v3.0.2', alias='apiVersion')  # Required by ODCS
     tenant: Optional[str] = None
     domain: Optional[str] = None
     domainId: Optional[str] = None
     dataProduct: Optional[str] = Field(None, alias='data_product')
     description: Optional[ContractDescription] = None
 
-    # ODCS top-level fields
+    # ODCS v3.0.2 top-level fields
     tags: Optional[List[AssignedTag]] = Field(default_factory=list)  # Read model returns AssignedTag, not AssignedTagCreate
     contractCreatedTs: Optional[str] = None
 
     # Schema section
     contract_schema: List[SchemaObject] = Field(default_factory=list, alias="schema")
 
-    # SLA section (ODCS structure)
+    # SLA section (ODCS v3.0.2 structure)
     slaDefaultElement: Optional[str] = None
     slaProperties: Optional[List[SLAProperty]] = Field(default_factory=list)
     sla: Optional[SLARequirements] = None  # Legacy structure
@@ -464,7 +464,7 @@ class DataContractRead(BaseModel):
     roles: Optional[List[ContractRole]] = Field(default_factory=list)
     access_control: Optional[AccessControl] = Field(None, alias='accessControl')  # Legacy
 
-    # Support section (ODCS structure)
+    # Support section (ODCS v3.0.2 structure)
     support: Union[List[SupportChannel], SupportChannels, None] = None
 
     # Infrastructure section
@@ -514,7 +514,7 @@ class DataContractSummary(BaseModel):
     project_id: Optional[str] = None
     project_name: Optional[str] = None
     kind: str = Field('DataContract')
-    apiVersion: str = Field('v3.1.0', alias='apiVersion')
+    apiVersion: str = Field('v3.0.2', alias='apiVersion')
     tenant: Optional[str] = None
     domain: Optional[str] = None
     domainId: Optional[str] = None

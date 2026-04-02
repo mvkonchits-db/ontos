@@ -201,7 +201,7 @@ export default function DataContractBasicFormDialog({ isOpen, onOpenChange, onSu
         owner_team_id: ownerTeamId && ownerTeamId !== '__none__' ? ownerTeamId : undefined,
         project_id: projectId && projectId !== '__none__' ? projectId : undefined,
         kind: 'DataContract',
-        apiVersion: 'v3.1.0',
+        apiVersion: 'v3.0.2',
         domainId: domain && domain !== '__none__' ? domain : undefined,
         tenant: tenant.trim() || undefined,
         tags: normalizedTags.length > 0 ? normalizedTags as any : undefined,

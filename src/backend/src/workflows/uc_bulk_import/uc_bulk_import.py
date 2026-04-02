@@ -443,7 +443,7 @@ def create_contracts(
                     "id": contract_id,
                     "name": contract_name,
                     "kind": "DataContract",
-                    "api_version": "v3.1.0",
+                    "api_version": "v3.0.2",
                     "version": "1.0.0",
                     "status": "draft",
                     "created_at": datetime.utcnow(),

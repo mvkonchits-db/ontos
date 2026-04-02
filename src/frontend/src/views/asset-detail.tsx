@@ -21,7 +21,6 @@ import { BusinessLineageGraph } from '@/components/common/business-lineage-graph
 import { ImpactAnalysisPanel } from '@/components/common/impact-analysis-panel';
 import { BusinessLineageView } from '@/components/lineage';
 import { LineageEditor } from '@/components/common/lineage-editor';
-import { useTranslation } from 'react-i18next';
 import { useApi } from '@/hooks/use-api';
 import { RelativeDate } from '@/components/common/relative-date';
 import { EntityTreePanel } from '@/components/common/entity-tree-panel';
@@ -105,7 +104,6 @@ export default function AssetDetailView() {
   const [relViewMode, setRelViewMode] = useState<'table' | 'graph'>('table');
 
   const { get: apiGet } = useApi();
-  const { i18n } = useTranslation();
   const { hasPermission, isLoading: permissionsLoading } = usePermissions();
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
   const setDynamicTitle = useBreadcrumbStore((state) => state.setDynamicTitle);
@@ -165,7 +163,7 @@ export default function AssetDetailView() {
       // Resolve ontology IRI for the asset type
       (async () => {
         try {
-          const resp = await apiGet<EntityTypeDefinition[]>(`/api/ontology/entity-types?tier=asset&lang=${encodeURIComponent(i18n.language)}`);
+          const resp = await apiGet<EntityTypeDefinition[]>('/api/ontology/entity-types?tier=asset');
           if (!resp.error && Array.isArray(resp.data)) {
             const match = resp.data.find(
               (t) => t.label === asset.asset_type_name || t.local_name === asset.asset_type_name

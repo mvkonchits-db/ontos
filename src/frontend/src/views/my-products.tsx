@@ -8,16 +8,19 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-import { Package, ExternalLink, ShoppingBag, Search, X, LayoutList, Network, Database, Grid2X2, Loader2 } from 'lucide-react';
+import { Package, ExternalLink, ShoppingBag, Search, X, LayoutList, Network, Database, Table2, Grid2X2, Loader2 } from 'lucide-react';
 import { CardSkeleton } from '@/components/common/list-view-skeleton';
 import { DataDomainMiniGraph } from '@/components/data-domains/data-domain-mini-graph';
 import { useDomains } from '@/hooks/use-domains';
 import { useViewModeStore } from '@/stores/view-mode-store';
 import { type DataProduct } from '@/types/data-product';
 import { type DataDomain } from '@/types/data-domain';
+import { type DatasetListItem, DATASET_STATUS_LABELS, DATASET_STATUS_COLORS } from '@/types/dataset';
 import { useApi } from '@/hooks/use-api';
 import { cn } from '@/lib/utils';
 import useBreadcrumbStore from '@/stores/breadcrumb-store';
+
+type AssetType = 'products' | 'datasets';
 
 export default function MyProducts() {
   const { t } = useTranslation('home');
@@ -29,11 +32,14 @@ export default function MyProducts() {
   const setStaticSegments = useBreadcrumbStore((state) => state.setStaticSegments);
 
   const [products, setProducts] = useState<DataProduct[]>([]);
+  const [datasets, setDatasets] = useState<DatasetListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [datasetsLoading, setDatasetsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
+  const [assetType, setAssetType] = useState<AssetType>('products');
   const [exactMatchesOnly, setExactMatchesOnly] = useState(false);
   const [matchSets, setMatchSets] = useState<{ ids: Set<string>; namesLower: Set<string> } | null>(null);
   const [selectedDomainDetails, setSelectedDomainDetails] = useState<DataDomain | null>(null);
@@ -66,9 +72,36 @@ export default function MyProducts() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const loadSubscribedDatasets = useCallback(async () => {
+    try {
+      setDatasetsLoading(true);
+      const resp = await fetch('/api/datasets/my-subscriptions');
+      if (!resp.ok) {
+        if (resp.status === 401) {
+          setDatasets([]);
+          return;
+        }
+        throw new Error(`HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+      setDatasets(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.warn('Failed to fetch subscribed datasets:', e);
+      setDatasets([]);
+    } finally {
+      setDatasetsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadSubscriptions();
   }, [loadSubscriptions]);
+
+  useEffect(() => {
+    if (assetType === 'datasets') {
+      loadSubscribedDatasets();
+    }
+  }, [assetType, loadSubscribedDatasets]);
 
   useEffect(() => {
     setStaticSegments([{ label: t('myProducts.title'), path: '/my-products' }]);
@@ -180,16 +213,33 @@ export default function MyProducts() {
     return list;
   }, [products, selectedDomainId, matchSets, searchQuery]);
 
+  const filteredDatasets = useMemo(() => {
+    if (!searchQuery.trim()) return datasets;
+    const q = searchQuery.toLowerCase();
+    return datasets.filter(d =>
+      d.name?.toLowerCase().includes(q) ||
+      d.full_path?.toLowerCase().includes(q) ||
+      d.contract_name?.toLowerCase().includes(q)
+    );
+  }, [datasets, searchQuery]);
+
   const hasProducts = products.length > 0;
+  const hasDatasets = datasets.length > 0;
+  const showAssetToggle = hasProducts || hasDatasets;
 
   const handleOpenProduct = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     navigate(`${pathname}/${productId}`);
   };
 
+  const handleOpenDataset = (e: React.MouseEvent, datasetId: string) => {
+    e.stopPropagation();
+    navigate(`/datasets/${datasetId}`);
+  };
+
   const handleBrowseMarketplace = () => navigate('/');
 
-  if (loading) {
+  if (loading && assetType === 'products') {
     return (
       <div className="flex flex-col gap-4 p-4">
         <div>
@@ -214,8 +264,8 @@ export default function MyProducts() {
     );
   }
 
-  const showEmpty = filteredProducts.length === 0;
-  const emptyNoSubscriptions = !hasProducts;
+  const showEmpty = (assetType === 'products' && filteredProducts.length === 0) || (assetType === 'datasets' && (datasetsLoading ? false : filteredDatasets.length === 0));
+  const emptyNoSubscriptions = assetType === 'products' ? !hasProducts : !hasDatasets;
 
   return (
     <div className="flex flex-col gap-4 p-4">
@@ -229,7 +279,7 @@ export default function MyProducts() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder={t('marketplace.searchPlaceholder')}
+          placeholder={assetType === 'products' ? t('marketplace.searchPlaceholder') : t('marketplace.searchDatasetsPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 h-12 text-base"
@@ -241,82 +291,99 @@ export default function MyProducts() {
         )}
       </div>
 
-      {/* Browse Data Domains */}
-      <div>
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-sm font-medium">{t('marketplace.browseDataDomains')}</div>
-          <div className="flex items-center gap-4">
-            {selectedDomainId && (
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{t('marketplace.exactMatchOnly')}</span>
-                <Switch checked={exactMatchesOnly} onCheckedChange={(v) => setExactMatchesOnly(!!v)} />
+      {/* Browse Data Domains - only for products */}
+      {assetType === 'products' && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-sm font-medium">{t('marketplace.browseDataDomains')}</div>
+            <div className="flex items-center gap-4">
+              {selectedDomainId && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{t('marketplace.exactMatchOnly')}</span>
+                  <Switch checked={exactMatchesOnly} onCheckedChange={(v) => setExactMatchesOnly(!!v)} />
+                </div>
+              )}
+              <div className="inline-flex items-center gap-1 p-0.5 bg-muted rounded-md">
+                <Button variant={domainBrowserStyle === 'pills' ? 'default' : 'ghost'} size="sm" onClick={() => setDomainBrowserStyle('pills')} className="h-7 px-2 gap-1" title={t('marketplace.domainView.pills')}>
+                  <LayoutList className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:inline text-xs">{t('marketplace.domainView.pills')}</span>
+                </Button>
+                <Button variant={domainBrowserStyle === 'graph' ? 'default' : 'ghost'} size="sm" onClick={() => setDomainBrowserStyle('graph')} className="h-7 px-2 gap-1" title={t('marketplace.domainView.graph')}>
+                  <Network className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:inline text-xs">{t('marketplace.domainView.graph')}</span>
+                </Button>
               </div>
-            )}
-            <div className="inline-flex items-center gap-1 p-0.5 bg-muted rounded-md">
-              <Button variant={domainBrowserStyle === 'pills' ? 'default' : 'ghost'} size="sm" onClick={() => setDomainBrowserStyle('pills')} className="h-7 px-2 gap-1" title={t('marketplace.domainView.pills')}>
-                <LayoutList className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:inline text-xs">{t('marketplace.domainView.pills')}</span>
-              </Button>
-              <Button variant={domainBrowserStyle === 'graph' ? 'default' : 'ghost'} size="sm" onClick={() => setDomainBrowserStyle('graph')} className="h-7 px-2 gap-1" title={t('marketplace.domainView.graph')}>
-                <Network className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:inline text-xs">{t('marketplace.domainView.graph')}</span>
-              </Button>
             </div>
           </div>
-        </div>
-        {domainsLoading || domainDetailsLoading ? (
-          <div className="flex items-center gap-2 text-muted-foreground h-[220px] justify-center border rounded-lg bg-muted/20">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">{t('marketplace.loadingDomains')}</span>
-          </div>
-        ) : domainBrowserStyle === 'pills' ? (
-          <div className="flex flex-wrap gap-2">
-            <Button variant={selectedDomainId === null ? 'default' : 'outline'} size="sm" onClick={() => setSelectedDomainId(null)} className="rounded-full">
-              {t('marketplace.allDomains')}
-            </Button>
-            {sortedDomains.map(domain => {
-              const parentDomain = domain.parent_id ? domains.find(d => d.id === domain.parent_id) : null;
-              return (
-                <HoverCard key={domain.id} openDelay={300} closeDelay={100}>
-                  <HoverCardTrigger asChild>
-                    <Button variant={selectedDomainId === domain.id ? 'default' : 'outline'} size="sm" onClick={() => setSelectedDomainId(domain.id)} className="rounded-full">
-                      {domain.name}
-                    </Button>
-                  </HoverCardTrigger>
-                  <HoverCardContent side="bottom" align="start" className="w-72">
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <Database className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
-                        <div>
-                          <h4 className="text-sm font-semibold">{domain.name}</h4>
-                          {parentDomain && <p className="text-xs text-muted-foreground">{t('marketplace.domainInfo.parentDomain')}: {parentDomain.name}</p>}
+          {domainsLoading || domainDetailsLoading ? (
+            <div className="flex items-center gap-2 text-muted-foreground h-[220px] justify-center border rounded-lg bg-muted/20">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span className="text-sm">{t('marketplace.loadingDomains')}</span>
+            </div>
+          ) : domainBrowserStyle === 'pills' ? (
+            <div className="flex flex-wrap gap-2">
+              <Button variant={selectedDomainId === null ? 'default' : 'outline'} size="sm" onClick={() => setSelectedDomainId(null)} className="rounded-full">
+                {t('marketplace.allDomains')}
+              </Button>
+              {sortedDomains.map(domain => {
+                const parentDomain = domain.parent_id ? domains.find(d => d.id === domain.parent_id) : null;
+                return (
+                  <HoverCard key={domain.id} openDelay={300} closeDelay={100}>
+                    <HoverCardTrigger asChild>
+                      <Button variant={selectedDomainId === domain.id ? 'default' : 'outline'} size="sm" onClick={() => setSelectedDomainId(domain.id)} className="rounded-full">
+                        {domain.name}
+                      </Button>
+                    </HoverCardTrigger>
+                    <HoverCardContent side="bottom" align="start" className="w-72">
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <Database className="h-4 w-4 mt-0.5 text-primary flex-shrink-0" />
+                          <div>
+                            <h4 className="text-sm font-semibold">{domain.name}</h4>
+                            {parentDomain && <p className="text-xs text-muted-foreground">{t('marketplace.domainInfo.parentDomain')}: {parentDomain.name}</p>}
+                          </div>
                         </div>
+                        {domain.description && <p className="text-xs text-muted-foreground line-clamp-3">{domain.description}</p>}
+                        {domain.children_count !== undefined && domain.children_count > 0 && (
+                          <p className="text-xs text-muted-foreground">{t('marketplace.domainInfo.childDomains', { count: domain.children_count })}</p>
+                        )}
                       </div>
-                      {domain.description && <p className="text-xs text-muted-foreground line-clamp-3">{domain.description}</p>}
-                      {domain.children_count !== undefined && domain.children_count > 0 && (
-                        <p className="text-xs text-muted-foreground">{t('marketplace.domainInfo.childDomains', { count: domain.children_count })}</p>
-                      )}
-                    </div>
-                  </HoverCardContent>
-                </HoverCard>
-              );
-            })}
-          </div>
-        ) : selectedDomainDetails ? (
-          <div className={cn('transition-opacity duration-300', graphFadeIn ? 'opacity-100' : 'opacity-0')}>
-            <DataDomainMiniGraph currentDomain={selectedDomainDetails} onNodeClick={(id) => setSelectedDomainId(id)} />
-          </div>
-        ) : (
-          <div className="h-[220px] border rounded-lg overflow-hidden bg-muted/20 w-full flex items-center justify-center text-muted-foreground">
-            {t('marketplace.selectDomainForGraph')}
-          </div>
-        )}
-      </div>
+                    </HoverCardContent>
+                  </HoverCard>
+                );
+              })}
+            </div>
+          ) : selectedDomainDetails ? (
+            <div className={cn('transition-opacity duration-300', graphFadeIn ? 'opacity-100' : 'opacity-0')}>
+              <DataDomainMiniGraph currentDomain={selectedDomainDetails} onNodeClick={(id) => setSelectedDomainId(id)} />
+            </div>
+          ) : (
+            <div className="h-[220px] border rounded-lg overflow-hidden bg-muted/20 w-full flex items-center justify-center text-muted-foreground">
+              {t('marketplace.selectDomainForGraph')}
+            </div>
+          )}
+        </div>
+      )}
 
-      {/* Tiles per row */}
+      {/* Browse: Data Products / Datasets & Tiles per row */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <div />
         <div className="flex items-center gap-4 flex-wrap">
+          {showAssetToggle && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{t('marketplace.browseAssetType')}</span>
+              <div className="inline-flex items-center gap-1 p-0.5 bg-muted rounded-md">
+                <Button variant={assetType === 'products' ? 'default' : 'ghost'} size="sm" onClick={() => setAssetType('products')} className="h-7 px-3 gap-1.5">
+                  <Package className="h-3.5 w-3.5" />
+                  {t('marketplace.assetTypes.products')}
+                </Button>
+                <Button variant={assetType === 'datasets' ? 'default' : 'ghost'} size="sm" onClick={() => setAssetType('datasets')} className="h-7 px-3 gap-1.5">
+                  <Table2 className="h-3.5 w-3.5" />
+                  {t('marketplace.assetTypes.datasets')}
+                </Button>
+              </div>
+            </div>
+          )}
           <div className="flex items-center gap-2">
             <Grid2X2 className="h-4 w-4 text-muted-foreground" />
             <Select value={String(tilesPerRow)} onValueChange={(v) => setTilesPerRow(Number(v) as 1 | 2 | 3 | 4)}>
@@ -348,14 +415,24 @@ export default function MyProducts() {
       {/* Empty state - filters returned no results */}
       {showEmpty && !emptyNoSubscriptions && (
         <div className="text-center py-12 text-muted-foreground">
-          <Package className="h-12 w-12 mx-auto mb-4 opacity-30" />
-          <p>{t('marketplace.products.noProducts')}</p>
-          <p className="text-sm mt-1">{t('marketplace.products.adjustFilters')}</p>
+          {assetType === 'products' ? (
+            <>
+              <Package className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p>{t('marketplace.products.noProducts')}</p>
+              <p className="text-sm mt-1">{t('marketplace.products.adjustFilters')}</p>
+            </>
+          ) : (
+            <>
+              <Table2 className="h-12 w-12 mx-auto mb-4 opacity-30" />
+              <p>{t('marketplace.datasets.noDatasets')}</p>
+              <p className="text-sm mt-1">{t('marketplace.datasets.adjustFilters')}</p>
+            </>
+          )}
         </div>
       )}
 
       {/* Products list */}
-      {filteredProducts.length > 0 && (
+      {assetType === 'products' && filteredProducts.length > 0 && (
         <>
           <div className="text-sm text-muted-foreground">
             {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} available
@@ -399,6 +476,59 @@ export default function MyProducts() {
           </div>
         </>
       )}
+
+      {/* Datasets list */}
+      {assetType === 'datasets' && (datasetsLoading ? (
+        <div className="flex items-center justify-center h-48">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : filteredDatasets.length > 0 && (
+        <>
+          <div className="text-sm text-muted-foreground">
+            {filteredDatasets.length} {filteredDatasets.length === 1 ? 'dataset' : 'datasets'} available
+          </div>
+          <div className={gridClass}>
+            {filteredDatasets.map((dataset) => {
+              const statusLabel = DATASET_STATUS_LABELS[dataset.status] || dataset.status;
+              const statusColorClass = DATASET_STATUS_COLORS[dataset.status] || '';
+              return (
+                <Card
+                  key={dataset.id}
+                  className={cn('cursor-pointer transition-all hover:shadow-md hover:border-primary/30 border-primary/20 bg-primary/5')}
+                  onClick={() => dataset.id && navigate(`/datasets/${dataset.id}`)}
+                >
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <Table2 className="h-4 w-4 text-primary flex-shrink-0" />
+                        <CardTitle className="text-base truncate">{dataset.name || 'Untitled'}</CardTitle>
+                      </div>
+                      {dataset.id && (
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 hover:bg-primary/10" onClick={(e) => handleOpenDataset(e, dataset.id!)} title={t('marketplace.openInDetails')}>
+                          <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                        </Button>
+                      )}
+                    </div>
+                    {dataset.description && <CardDescription className="line-clamp-2 text-sm">{dataset.description}</CardDescription>}
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className={cn('text-xs', statusColorClass)}>{statusLabel}</Badge>
+                      {dataset.instance_count !== undefined && dataset.instance_count > 0 && (
+                        <Badge variant="outline" className="text-xs">{dataset.instance_count} instance{dataset.instance_count !== 1 ? 's' : ''}</Badge>
+                      )}
+                      {dataset.contract_name && <Badge variant="secondary" className="text-xs">{dataset.contract_name}</Badge>}
+                    </div>
+                    {dataset.owner_team_name && (
+                      <p className="text-xs text-muted-foreground mt-2 truncate">{t('marketplace.datasets.owner')}: {dataset.owner_team_name}</p>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </>
+      ))}
     </div>
   );
 }

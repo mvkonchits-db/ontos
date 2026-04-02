@@ -844,7 +844,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         odcs: Dict[str, Any] = {
             'id': db_obj.id,
             'kind': db_obj.kind or 'DataContract',
-            'apiVersion': db_obj.api_version or 'v3.1.0',
+            'apiVersion': db_obj.api_version or 'v3.0.2',
             'version': db_obj.version,
             'status': db_obj.status,
         }
@@ -891,7 +891,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 if db_obj.data_product:
                     odcs['dataProduct'] = db_obj.data_product
 
-        # ODCS additional top-level fields
+        # ODCS v3.0.2 additional top-level fields
         if getattr(db_obj, 'sla_default_element', None):
             odcs['slaDefaultElement'] = db_obj.sla_default_element
         if getattr(db_obj, 'contract_created_ts', None):
@@ -906,7 +906,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
         if db_obj.description_limitations:
             description['limitations'] = db_obj.description_limitations
 
-        # Add authoritativeDefinitions under description (ODCS structure)
+        # Add authoritativeDefinitions under description (ODCS v3.0.2 structure)
         if hasattr(db_obj, 'authoritative_defs') and db_obj.authoritative_defs:
             auth_defs = []
             for auth_def in db_obj.authoritative_defs:
@@ -940,7 +940,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 if schema_obj.data_granularity_description:
                     schema_dict['dataGranularityDescription'] = schema_obj.data_granularity_description
 
-                # ODCS additional schema object fields
+                # ODCS v3.0.2 additional schema object fields
                 if getattr(schema_obj, 'business_name', None):
                     schema_dict['businessName'] = schema_obj.business_name
                 if getattr(schema_obj, 'physical_type', None):
@@ -1289,7 +1289,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             odcs['team'] = team
             
         # Legacy: Top-level quality rules are deprecated in favor of schema-nested quality rules
-        # ODCS specifies quality rules should be nested under schema objects (implemented above)
+        # ODCS v3.0.2 specifies quality rules should be nested under schema objects (implemented above)
         # Keeping this section commented for backwards compatibility reference:
         # if hasattr(db_obj, 'quality_checks') and db_obj.quality_checks:
         #     legacy_quality_rules = [check for check in db_obj.quality_checks if getattr(check, 'level', None) == 'contract']
@@ -1818,21 +1818,6 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             )
             db.add(member_db)
     
-    def _normalize_team_data(self, team_raw) -> List[dict]:
-        """Normalize ODCS team data to a list of member dicts.
-        
-        ODCS v3.1.0 allows team as either:
-        - A Team object: { members: [...], name?, description?, ... }
-        - A deprecated array of TeamMember dicts (v3.0.x compat)
-        """
-        if team_raw is None:
-            return []
-        if isinstance(team_raw, dict):
-            return team_raw.get('members', [])
-        if isinstance(team_raw, list):
-            return team_raw
-        return []
-
     def _create_support_channels(self, db, contract_id: str, support_data: List[dict]):
         """Create support channels from ODCS support array."""
         from src.db_models.data_contracts import DataContractSupportDb
@@ -1866,11 +1851,11 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
     def _create_custom_properties(self, db, contract_id: str, custom_props):
         """Create custom properties from ODCS customProperties (handles both array and dict formats).
         
-        ODCS uses array format: [{"property": "key", "value": "val"}, ...]
+        ODCS v3.0.2 uses array format: [{"property": "key", "value": "val"}, ...]
         Legacy format uses dict: {"key": "val", ...}
         """
         if isinstance(custom_props, list):
-            # ODCS array format
+            # ODCS v3.0.2 array format
             for prop_data in custom_props:
                 if not isinstance(prop_data, dict):
                     continue
@@ -2134,7 +2119,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 owner_team_id=owner_team_id,
                 project_id=project_id,  # Add project_id
                 kind=data_dict.get('kind', 'DataContract'),
-                api_version=data_dict.get('apiVersion', 'v3.1.0'),
+                api_version=data_dict.get('apiVersion', 'v3.0.2'),
                 tenant=data_dict.get('tenant'),
                 data_product=data_dict.get('dataProduct'),
                 domain_id=domain_id,
@@ -2159,10 +2144,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             if data_dict.get('authoritativeDefinitions'):
                 self._process_semantic_links(db, created.id, data_dict, current_user)
 
-            # Create team members if provided (v3.1.0: team can be object with members or deprecated array)
-            team_data = self._normalize_team_data(data_dict.get('team'))
-            if team_data:
-                self._create_team_members(db, created.id, team_data)
+            # Create team members if provided
+            if data_dict.get('team'):
+                self._create_team_members(db, created.id, data_dict['team'])
 
             db.commit()
             db.refresh(created)
@@ -2363,7 +2347,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                     if data_dict['qualityRules']:
                         self._create_quality_checks(db, contract_id, data_dict['qualityRules'])
             
-            # Handle team members if provided (v3.1.0: team can be object with members or deprecated array)
+            # Handle team members if provided
             if data_dict.get('team') is not None:
                 from src.db_models.data_contracts import DataContractTeamDb
                 # Remove existing team members
@@ -2372,9 +2356,8 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 ).delete()
                 
                 # Add new team members
-                team_data = self._normalize_team_data(data_dict['team'])
-                if team_data:
-                    self._create_team_members(db, contract_id, team_data)
+                if data_dict['team']:
+                    self._create_team_members(db, contract_id, data_dict['team'])
             
             # Handle tags if provided and tags_manager is available
             if tags_data is not None and self._tags_manager:
@@ -2596,10 +2579,10 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             
             try:
                 validate_odcs_contract(parsed, strict=False)
-                logger.info("Contract passes ODCS validation")
+                logger.info("Contract passes ODCS v3.0.2 validation")
             except ODCSValidationError as e:
                 # Log validation errors but don't block creation for flexibility
-                warning_msg = f"Contract does not fully comply with ODCS specification: {e.message}"
+                warning_msg = f"Contract does not fully comply with ODCS v3.0.2: {e.message}"
                 logger.warning(warning_msg)
                 warnings.append(warning_msg)
                 
@@ -2651,7 +2634,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             status_val = parsed_odcs.get('status', 'draft')
             owner_val = parsed_odcs.get('owner') or current_user or 'system'
             kind_val = parsed_odcs.get('kind', 'DataContract')
-            api_version_val = parsed_odcs.get('apiVersion') or parsed_odcs.get('api_version', 'v3.1.0')
+            api_version_val = parsed_odcs.get('apiVersion') or parsed_odcs.get('api_version', 'v3.0.2')
             
             # Extract description fields
             description = parsed_odcs.get('description', {})
@@ -2710,9 +2693,9 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
             if isinstance(schema_data, list) and schema_data:
                 self._create_schema_objects(db, created.id, schema_data, current_user)
             
-            # Create team members if present (v3.1.0: team can be object with members or deprecated array)
-            team_data = self._normalize_team_data(parsed_odcs.get('team'))
-            if team_data:
+            # Create team members if present
+            team_data = parsed_odcs.get('team', [])
+            if isinstance(team_data, list) and team_data:
                 self._create_team_members(db, created.id, team_data)
             
             # Create support channels if present
@@ -5981,7 +5964,7 @@ class DataContractsManager(DeliveryMixin, SearchableAsset):
                 propertyCount=row.prop_count,
             ))
         
-        # Build team (ODCS compliant)
+        # Build team (ODCS v3.0.2 compliant)
         team = []
         if getattr(db_contract, 'team', None):
             for member in db_contract.team:

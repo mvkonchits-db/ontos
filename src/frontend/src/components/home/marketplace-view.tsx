@@ -3,11 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Database, Search, Bell, X, LayoutList, Network, Package, Grid2X2, ExternalLink } from 'lucide-react';
+import { Loader2, Database, Search, Bell, X, LayoutList, Network, Package, Table2, Grid2X2, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDomains } from '@/hooks/use-domains';
 import { type DataProduct } from '@/types/data-product';
 import { type DataDomain } from '@/types/data-domain';
+import { type DatasetListItem, DATASET_STATUS_LABELS, DATASET_STATUS_COLORS } from '@/types/dataset';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -25,6 +26,9 @@ import { RatingBadge } from '@/components/ratings';
 import CertificationBadge from '@/components/common/certification-badge';
 import PublicationBadge from '@/components/common/publication-badge';
 import { PUBLICATION_SCOPE_LABELS, type CertificationLevel } from '@/types/lifecycle';
+
+// Asset type for marketplace browsing
+type MarketplaceAssetType = 'products' | 'datasets';
 
 interface MarketplaceViewProps {
   className?: string;
@@ -51,6 +55,7 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null);
+  const [assetType, setAssetType] = useState<MarketplaceAssetType>('products');
   const [scopeFilter, setScopeFilter] = useState<string>('all');
   const [certificationLevels, setCertificationLevels] = useState<CertificationLevel[]>([]);
   
@@ -73,6 +78,20 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   const [, setSubscribedProducts] = useState<DataProduct[]>([]);
   const [subscribedProductIds, setSubscribedProductIds] = useState<Set<string>>(new Set());
   const [, setSubscribedLoading] = useState(true);
+  
+  // Datasets state
+  const [allDatasets, setAllDatasets] = useState<DatasetListItem[]>([]);
+  const [datasetsLoading, setDatasetsLoading] = useState(false);
+  const [datasetsError, setDatasetsError] = useState<string | null>(null);
+  
+  // Subscribed datasets state
+  const [, setSubscribedDatasets] = useState<DatasetListItem[]>([]);
+  const [subscribedDatasetIds, setSubscribedDatasetIds] = useState<Set<string>>(new Set());
+  const [, setSubscribedDatasetsLoading] = useState(false);
+  
+  // Selected dataset for dialogs
+  const [selectedDataset, setSelectedDataset] = useState<DatasetListItem | null>(null);
+  const [datasetIsSubscribed, setDatasetIsSubscribed] = useState(false);
   
   // Dialog state
   const [selectedProduct, setSelectedProduct] = useState<DataProduct | null>(null);
@@ -151,6 +170,59 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   useEffect(() => {
     loadSubscribedProducts();
   }, [loadSubscribedProducts]);
+
+  // Fetch published datasets (load on mount to know if toggle should be shown)
+  useEffect(() => {
+    const loadDatasets = async () => {
+      try {
+        setDatasetsLoading(true);
+        const resp = await fetch('/api/datasets/published');
+        if (!resp.ok) throw new Error(`HTTP error! status: ${resp.status}`);
+        const data = await resp.json();
+        setAllDatasets(Array.isArray(data) ? data : []);
+        setDatasetsError(null);
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : 'Failed to load datasets';
+        setDatasetsError(message);
+        setAllDatasets([]);
+      } finally {
+        setDatasetsLoading(false);
+      }
+    };
+    loadDatasets();
+  }, []);
+
+  // Fetch subscribed datasets
+  const loadSubscribedDatasets = useCallback(async () => {
+    try {
+      setSubscribedDatasetsLoading(true);
+      const resp = await fetch('/api/datasets/my-subscriptions');
+      if (!resp.ok) {
+        if (resp.status === 401) {
+          setSubscribedDatasets([]);
+          setSubscribedDatasetIds(new Set());
+          return;
+        }
+        throw new Error(`HTTP error! status: ${resp.status}`);
+      }
+      const data = await resp.json();
+      const datasets = Array.isArray(data) ? data : [];
+      setSubscribedDatasets(datasets);
+      setSubscribedDatasetIds(new Set(datasets.map((d: DatasetListItem) => d.id).filter(Boolean)));
+    } catch (e) {
+      console.warn('Failed to fetch subscribed datasets:', e);
+      setSubscribedDatasets([]);
+      setSubscribedDatasetIds(new Set());
+    } finally {
+      setSubscribedDatasetsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (assetType === 'datasets') {
+      loadSubscribedDatasets();
+    }
+  }, [assetType, loadSubscribedDatasets]);
 
   // Load domain details when in graph mode and domain is selected
   const loadDomainDetails = useCallback(async (domainId: string) => {
@@ -314,11 +386,55 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
     return filtered;
   }, [allProducts, selectedDomainId, searchQuery, matchSets]);
 
+  // Filter datasets based on search query (datasets don't have domain association)
+  const filteredDatasets = useMemo(() => {
+    let filtered = allDatasets;
+    
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(d => 
+        d.name?.toLowerCase().includes(query) ||
+        d.full_path?.toLowerCase().includes(query) ||
+        d.contract_name?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [allDatasets, searchQuery]);
+
+  // Determine if we have products and/or datasets available
+  const hasProducts = allProducts.length > 0;
+  const hasDatasets = allDatasets.length > 0;
+  const showAssetToggle = hasProducts && hasDatasets;
+
+  // Auto-switch to available asset type when only one exists
+  useEffect(() => {
+    if (productsLoading || datasetsLoading) return;
+    
+    if (!hasProducts && hasDatasets && assetType === 'products') {
+      setAssetType('datasets');
+    } else if (hasProducts && !hasDatasets && assetType === 'datasets') {
+      setAssetType('products');
+    }
+  }, [hasProducts, hasDatasets, assetType, productsLoading, datasetsLoading]);
+
   // Handle product card click
   const handleProductClick = async (product: DataProduct) => {
     setSelectedProduct(product);
+    setSelectedDataset(null);
     setCheckingSubscription(true);
     setProductIsSubscribed(subscribedProductIds.has(product.id || ''));
+    setInfoDialogOpen(true);
+    setCheckingSubscription(false);
+  };
+
+  // Handle dataset card click
+  const handleDatasetClick = async (dataset: DatasetListItem) => {
+    setSelectedDataset(dataset);
+    setSelectedProduct(null);
+    setCheckingSubscription(true);
+    setDatasetIsSubscribed(subscribedDatasetIds.has(dataset.id || ''));
     setInfoDialogOpen(true);
     setCheckingSubscription(false);
   };
@@ -346,6 +462,35 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
     setSubscriptionWizardOpen(false);
     setSubscriptionWorkflowId(null);
     setSelectedProduct(null);
+  };
+
+  // Handle successful dataset subscription (from wizard or old dialog)
+  const handleDatasetSubscriptionSuccess = async () => {
+    if (subscriptionWizardOpen) {
+      loadSubscribedDatasets();
+      setDatasetIsSubscribed(true);
+      setSubscriptionWizardOpen(false);
+      setSubscriptionWorkflowId(null);
+      setSelectedDataset(null);
+      return;
+    }
+    if (selectedDataset) {
+      try {
+        const resp = await fetch(`/api/datasets/${selectedDataset.id}/subscribe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reason: '' }),
+        });
+        if (resp.ok) {
+          loadSubscribedDatasets();
+          setDatasetIsSubscribed(true);
+        }
+      } catch (e) {
+        console.error('Failed to subscribe to dataset:', e);
+      }
+    }
+    setSubscribeDialogOpen(false);
+    setSelectedDataset(null);
   };
 
   // Get user's first name for greeting
@@ -381,6 +526,12 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
   const handleOpenProductDetails = (e: React.MouseEvent, productId: string) => {
     e.stopPropagation();
     navigate(`/my-products/${productId}`);
+  };
+
+  // Handle opening dataset in details view
+  const handleOpenDatasetDetails = (e: React.MouseEvent, datasetId: string) => {
+    e.stopPropagation();
+    navigate(`/assets/${datasetId}`);
   };
 
   // Render product card
@@ -464,6 +615,80 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
     );
   };
 
+  // Render dataset card
+  const renderDatasetCard = (dataset: DatasetListItem, isSubscribed: boolean = false) => {
+    const statusLabel = DATASET_STATUS_LABELS[dataset.status] || dataset.status;
+    const statusColorClass = DATASET_STATUS_COLORS[dataset.status] || '';
+
+    return (
+      <Card 
+        key={dataset.id} 
+        className={cn(
+          "cursor-pointer transition-all hover:shadow-md hover:border-primary/30",
+          isSubscribed && "border-primary/20 bg-primary/5"
+        )}
+        onClick={() => handleDatasetClick(dataset)}
+      >
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <Table2 className="h-4 w-4 text-primary flex-shrink-0" />
+              <CardTitle className="text-base truncate">{dataset.name || 'Untitled'}</CardTitle>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {isSubscribed && (
+                <Bell className="h-4 w-4 text-primary" />
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 hover:bg-primary/10"
+                onClick={(e) => handleOpenDatasetDetails(e, dataset.id || '')}
+                title={t('marketplace.openInDetails')}
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+              </Button>
+            </div>
+          </div>
+          {dataset.description && (
+            <CardDescription className="line-clamp-2 text-sm">
+              {dataset.description}
+            </CardDescription>
+          )}
+        </CardHeader>
+        <CardContent className="pt-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge className={cn("text-xs", statusColorClass)}>
+              {statusLabel}
+            </Badge>
+            {dataset.instance_count !== undefined && dataset.instance_count > 0 && (
+              <Badge variant="outline" className="text-xs">
+                {dataset.instance_count} instance{dataset.instance_count !== 1 ? 's' : ''}
+              </Badge>
+            )}
+            {dataset.contract_name && (
+              <Badge variant="secondary" className="text-xs">
+                {dataset.contract_name}
+              </Badge>
+            )}
+            {dataset.id && (
+              <RatingBadge
+                entityType="dataset"
+                entityId={dataset.id}
+                size="sm"
+              />
+            )}
+          </div>
+          {dataset.owner_team_name && (
+            <div className="text-xs text-muted-foreground mt-2 truncate">
+              {t('marketplace.datasets.owner')}: {dataset.owner_team_name}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  };
+
   return (
     <div className={cn("space-y-6", className)}>
       {/* Welcome Header */}
@@ -483,7 +708,7 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
           type="search"
-          placeholder={t('marketplace.searchPlaceholder')}
+          placeholder={assetType === 'products' ? t('marketplace.searchPlaceholder') : t('marketplace.searchDatasetsPlaceholder')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10 h-12 text-base"
@@ -500,7 +725,8 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
         )}
       </div>
 
-      {/* Domain Browser */}
+      {/* Domain Browser - only show for products */}
+      {assetType === 'products' && (
       <div>
         <div className="flex items-center justify-between mb-2">
           <div className="text-sm font-medium">{t('marketplace.browseDataDomains')}</div>
@@ -618,23 +844,53 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
           )
         )}
       </div>
+      )}
 
-      {/* Scope filter & tiles per row */}
+      {/* Asset Type Toggle & Tiles Per Row */}
       <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2 flex-wrap">
-            <Select value={scopeFilter} onValueChange={setScopeFilter}>
-              <SelectTrigger className="w-[180px] h-7 text-xs">
-                <SelectValue placeholder={t('marketplace.scopeFilter.placeholder')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('marketplace.scopeFilter.all')}</SelectItem>
-                <SelectItem value="domain">{PUBLICATION_SCOPE_LABELS.domain}</SelectItem>
-                <SelectItem value="organization">{PUBLICATION_SCOPE_LABELS.organization}</SelectItem>
-                <SelectItem value="external">{PUBLICATION_SCOPE_LABELS.external}</SelectItem>
-              </SelectContent>
-            </Select>
+            {assetType === 'products' && (
+              <Select value={scopeFilter} onValueChange={setScopeFilter}>
+                <SelectTrigger className="w-[180px] h-7 text-xs">
+                  <SelectValue placeholder={t('marketplace.scopeFilter.placeholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{t('marketplace.scopeFilter.all')}</SelectItem>
+                  <SelectItem value="domain">{PUBLICATION_SCOPE_LABELS.domain}</SelectItem>
+                  <SelectItem value="organization">{PUBLICATION_SCOPE_LABELS.organization}</SelectItem>
+                  <SelectItem value="external">{PUBLICATION_SCOPE_LABELS.external}</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="flex items-center gap-4 flex-wrap">
+            {/* Asset Type Toggle - only show when both types have data */}
+            {showAssetToggle && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">{t('marketplace.browseAssetType')}</span>
+                <div className="inline-flex items-center gap-1 p-0.5 bg-muted rounded-md">
+                  <Button
+                    variant={assetType === 'products' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setAssetType('products')}
+                    className="h-7 px-3 gap-1.5"
+                  >
+                    <Package className="h-3.5 w-3.5" />
+                    {t('marketplace.assetTypes.products')}
+                  </Button>
+                  <Button
+                    variant={assetType === 'datasets' ? 'default' : 'ghost'}
+                    size="sm"
+                    onClick={() => setAssetType('datasets')}
+                    className="h-7 px-3 gap-1.5"
+                  >
+                    <Table2 className="h-3.5 w-3.5" />
+                    {t('marketplace.assetTypes.datasets')}
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Tiles Per Row Selector */}
             <div className="flex items-center gap-2">
               <Grid2X2 className="h-4 w-4 text-muted-foreground" />
@@ -657,34 +913,68 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
         </div>
 
         {/* Products */}
-        <div className="mt-4">
-          {productsLoading || matchesLoading ? (
-            <div className="flex items-center justify-center h-48">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : productsError ? (
-            <Alert variant="destructive">
-              <AlertDescription>{productsError}</AlertDescription>
-            </Alert>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <Package className="h-12 w-12 mx-auto mb-4 opacity-30" />
-              <p>{t('marketplace.products.noProducts')}</p>
-              {(searchQuery || selectedDomainId || scopeFilter !== 'all') && (
-                <p className="text-sm mt-1">{t('marketplace.products.adjustFilters')}</p>
-              )}
-            </div>
-          ) : (
-            <>
-              <div className="text-sm text-muted-foreground mb-4">
-                {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} available
+        {assetType === 'products' && (
+          <div className="mt-4">
+            {productsLoading || matchesLoading ? (
+              <div className="flex items-center justify-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
-              <div className={gridClass}>
-                {filteredProducts.map(p => renderProductCard(p, subscribedProductIds.has(p.id || '')))}
+            ) : productsError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{productsError}</AlertDescription>
+              </Alert>
+            ) : filteredProducts.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Package className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p>{t('marketplace.products.noProducts')}</p>
+                {(searchQuery || selectedDomainId || scopeFilter !== 'all') && (
+                  <p className="text-sm mt-1">{t('marketplace.products.adjustFilters')}</p>
+                )}
               </div>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <div className="text-sm text-muted-foreground mb-4">
+                  {filteredProducts.length} {filteredProducts.length === 1 ? 'product' : 'products'} available
+                </div>
+                <div className={gridClass}>
+                  {filteredProducts.map(p => renderProductCard(p, subscribedProductIds.has(p.id || '')))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* Datasets */}
+        {assetType === 'datasets' && (
+          <div className="mt-4">
+            {datasetsLoading ? (
+              <div className="flex items-center justify-center h-48">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : datasetsError ? (
+              <Alert variant="destructive">
+                <AlertDescription>{datasetsError}</AlertDescription>
+              </Alert>
+            ) : filteredDatasets.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Table2 className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                <p>{t('marketplace.datasets.noDatasets')}</p>
+                {searchQuery && (
+                  <p className="text-sm mt-1">{t('marketplace.datasets.adjustFilters')}</p>
+                )}
+              </div>
+            ) : (
+              <>
+                <div className="text-sm text-muted-foreground mb-4">
+                  {filteredDatasets.length} {filteredDatasets.length === 1 ? 'dataset' : 'datasets'} available
+                </div>
+                <div className={gridClass}>
+                  {filteredDatasets.map(d => renderDatasetCard(d, subscribedDatasetIds.has(d.id || '')))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
       {/* Info Dialog - Products */}
       {selectedProduct && (
@@ -704,8 +994,26 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
         />
       )}
 
+      {/* Info Dialog - Datasets */}
+      {selectedDataset && (
+        <EntityInfoDialog
+          entityType="dataset"
+          entityId={selectedDataset.id || null}
+          title={selectedDataset.name}
+          open={infoDialogOpen}
+          onOpenChange={(open) => {
+            setInfoDialogOpen(open);
+            if (!open) setSelectedDataset(null);
+          }}
+          onSubscribe={handleSubscribeClick}
+          isSubscribed={datasetIsSubscribed}
+          subscriptionLoading={checkingSubscription}
+          showBackButton
+        />
+      )}
+
       {/* Subscription wizard (approval workflow with completion_action=subscribe) */}
-      {selectedProduct && subscriptionWizardOpen && subscriptionWorkflowId && (
+      {(selectedProduct || selectedDataset) && subscriptionWizardOpen && subscriptionWorkflowId && (
         <ApprovalWizardDialog
           isOpen={subscriptionWizardOpen}
           onOpenChange={(open) => {
@@ -713,14 +1021,18 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
             if (!open) {
               setSubscriptionWorkflowId(null);
               setSelectedProduct(null);
+              setSelectedDataset(null);
             }
           }}
-          entityType="data_product"
-          entityId={selectedProduct.id || ''}
+          entityType={selectedProduct ? 'data_product' : 'dataset'}
+          entityId={selectedProduct?.id || selectedDataset?.id || ''}
           preselectedWorkflowId={subscriptionWorkflowId}
           completionAction="subscribe"
           autoStartWithPreselected
-          onComplete={handleProductSubscriptionSuccess}
+          onComplete={() => {
+            if (selectedProduct) handleProductSubscriptionSuccess();
+            else handleDatasetSubscriptionSuccess();
+          }}
         />
       )}
 
@@ -735,6 +1047,21 @@ export default function MarketplaceView({ className }: MarketplaceViewProps) {
           productId={selectedProduct.id || ''}
           productName={selectedProduct.name || 'Unknown Product'}
           onSuccess={handleProductSubscriptionSuccess}
+        />
+      )}
+
+      {/* Subscribe Dialog - Datasets (fallback when no subscription workflow) */}
+      {selectedDataset && subscribeDialogOpen && (
+        <SubscribeDialog
+          open={subscribeDialogOpen}
+          onOpenChange={(open) => {
+            setSubscribeDialogOpen(open);
+            if (!open) setSelectedDataset(null);
+          }}
+          productId={selectedDataset.id || ''}
+          productName={selectedDataset.name || 'Unknown Dataset'}
+          onSuccess={handleDatasetSubscriptionSuccess}
+          isDataset
         />
       )}
     </div>

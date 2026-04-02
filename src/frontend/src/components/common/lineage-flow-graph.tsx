@@ -24,7 +24,6 @@ import {
 import * as dagre from 'dagre';
 import type { LineageGraph, LineageGraphNode, LineageGraphEdge } from '@/types/ontology-schema';
 import { TYPE_COLOR } from '@/components/lineage/constants';
-import { useFormatLabel } from '@/lib/format-label';
 
 const ICON_MAP: Record<string, React.ElementType> = {
   Table2, Eye, Columns2, LayoutDashboard, Globe, FileCode, Brain, Activity,
@@ -156,7 +155,6 @@ function buildLineageFlowGraph(
   data: LineageGraph,
   navigate: (path: string) => void,
   isDark: boolean,
-  formatLabel: (s: string | null | undefined) => string,
 ): { nodes: Node[]; edges: Edge[] } {
   // Identify containment edges and non-containment (flow) edges
   const containmentEdges: LineageGraphEdge[] = [];
@@ -271,7 +269,7 @@ function buildLineageFlowGraph(
       source: edge.source,
       target: edge.target,
       type: 'smoothstep',
-      label: formatLabel(edge.label) || undefined,
+      label: edge.label || undefined,
       labelStyle: { fontSize: 9, fill: isDark ? '#94a3b8' : '#64748b' },
       labelBgStyle: { fill: isDark ? '#1e293b' : '#f8fafc', fillOpacity: 0.9 },
       labelBgPadding: [4, 2] as [number, number],
@@ -301,7 +299,6 @@ export function LineageFlowGraph({
 }: LineageFlowGraphProps) {
   const navigate = useNavigate();
   const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark');
-  const formatLabel = useFormatLabel();
 
   const [graphData, setGraphData] = useState<LineageGraph | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -330,9 +327,9 @@ export function LineageFlowGraph({
     if (!graphData || graphData.nodes.length === 0) {
       return { layoutedNodes: [], layoutedEdges: [] };
     }
-    const { nodes, edges } = buildLineageFlowGraph(graphData, navigate, isDark, formatLabel);
+    const { nodes, edges } = buildLineageFlowGraph(graphData, navigate, isDark);
     return { layoutedNodes: nodes, layoutedEdges: edges };
-  }, [graphData, navigate, isDark, formatLabel]);
+  }, [graphData, navigate, isDark]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);

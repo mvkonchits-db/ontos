@@ -17,7 +17,7 @@ from src.repositories.agreement_wizard_sessions_repository import agreement_wiza
 from src.repositories.agreements_repository import agreements_repo
 from src.repositories.data_contracts_repository import data_contract_repo
 from src.repositories.data_products_repository import data_product_repo
-from src.repositories.assets_repository import asset_repo
+from src.repositories.datasets_repository import dataset_repo
 from src.common.logging import get_logger
 
 logger = get_logger(__name__)
@@ -49,8 +49,8 @@ class AgreementWizardManager:
         if et == "data_product":
             row = data_product_repo.get(self._db, entity_id)
             return row.name if row else None
-        if et in ("dataset", "asset"):
-            row = asset_repo.get(self._db, entity_id)
+        if et == "dataset":
+            row = dataset_repo.get(self._db, entity_id)
             return row.name if row else None
         if et == "data_contract":
             row = data_contract_repo.get(self._db, entity_id)
@@ -315,20 +315,18 @@ class AgreementWizardManager:
                     logger.info("Subscription created for data_product %s via agreement wizard", session.entity_id)
                 except Exception as e:
                     logger.warning("Subscribe (data_product) after wizard failed: %s", e)
-            elif entity_type_lower in ("dataset", "asset"):
+            elif entity_type_lower == "dataset":
                 try:
-                    from src.models.entity_subscriptions import EntitySubscriptionCreate
-                    from src.repositories.entity_subscriptions_repository import entity_subscription_repo
-                    sub_in = EntitySubscriptionCreate(
-                        entity_type="asset",
-                        entity_id=str(session.entity_id),
-                        subscriber_email=subscriber_email,
-                        subscription_reason=reason,
+                    from src.controller.datasets_manager import DatasetsManager
+                    ds_manager = DatasetsManager(self._db)
+                    ds_manager.subscribe(
+                        dataset_id=session.entity_id,
+                        email=subscriber_email,
+                        reason=reason,
                     )
-                    entity_subscription_repo.create(self._db, obj_in=sub_in)
-                    logger.info("Subscription created for asset %s via agreement wizard", session.entity_id)
+                    logger.info("Subscription created for dataset %s via agreement wizard", session.entity_id)
                 except Exception as e:
-                    logger.warning("Subscribe (asset) after wizard failed: %s", e)
+                    logger.warning("Subscribe (dataset) after wizard failed: %s", e)
 
         agreement_wizard_sessions_repo.set_completed(self._db, session.id)
         return {

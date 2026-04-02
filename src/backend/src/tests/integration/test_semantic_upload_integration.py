@@ -35,7 +35,7 @@ class TestSemanticUploadIntegration:
             "status": "draft",
             "owner": "test-user",
             "kind": "DataContract",
-            "apiVersion": "v3.1.0",
+            "apiVersion": "v3.0.2",
             "description": {
                 "purpose": "Test contract for semantic link processing"
             },

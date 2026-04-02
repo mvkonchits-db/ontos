@@ -24,7 +24,7 @@ export default function TeamMemberFormDialog({ isOpen, onOpenChange, onSubmit, i
   useEffect(() => {
     if (isOpen && initial) {
       setRole(initial.role || '')
-      // Prefer email, fallback to username (for ODCS compatibility)
+      // Prefer email, fallback to username (for ODCS v3.0.2 compatibility)
       setEmail(initial.email || initial.username || '')
       setName(initial.name || '')
     } else if (isOpen && !initial) {
@@ -54,7 +54,7 @@ export default function TeamMemberFormDialog({ isOpen, onOpenChange, onSubmit, i
     setIsSubmitting(true)
     try {
       const member: TeamMember = {
-        username: email.trim(), // ODCS uses username
+        username: email.trim(), // ODCS v3.0.2 uses username
         role: role.trim(),
         email: email.trim(), // Keep for backward compatibility
         name: name.trim() || undefined,

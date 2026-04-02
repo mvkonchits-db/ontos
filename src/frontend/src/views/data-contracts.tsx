@@ -9,10 +9,11 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import TagChip from '@/components/ui/tag-chip';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Plus, Pencil, Trash2, AlertCircle, Upload, ChevronDown, ChevronRight, KeyRound, HelpCircle, FileText, Loader2, X, Eye } from 'lucide-react';
+import { Plus, Pencil, Trash2, AlertCircle, Upload, ChevronDown, ChevronRight, KeyRound, HelpCircle, FileText, Table2, Loader2, X, Eye } from 'lucide-react';
 import { ListViewSkeleton } from '@/components/common/list-view-skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import DataContractBasicFormDialog from '@/components/data-contracts/data-contract-basic-form-dialog'
+import CreateContractFromDatasetDialog from '@/components/datasets/create-contract-from-dataset-dialog'
 import { useDropzone } from 'react-dropzone';
 import { ColumnDef } from "@tanstack/react-table"
 import { useToast } from "@/hooks/use-toast"
@@ -35,6 +36,7 @@ export default function DataContracts() {
   const [error, setError] = useState<string | null>(null);
   const [openWizard, setOpenWizard] = useState(false);
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
+  const [openFromDatasetDialog, setOpenFromDatasetDialog] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<{ message: string; detail?: string } | null>(null);
   const [odcsPaste, setOdcsPaste] = useState<string>('')
@@ -528,6 +530,22 @@ export default function DataContracts() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
+                    <Button onClick={() => setOpenFromDatasetDialog(true)} variant="outline" className="gap-2 h-9">
+                      <Table2 className="h-4 w-4" />
+                      From Dataset
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" className="max-w-xs">
+                    <p className="font-medium">Create from Dataset</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Create a new Data Contract from an existing Dataset, optionally inferring the schema from one of its instances.
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
                     <Button onClick={() => setOpenUploadDialog(true)} variant="outline" className="gap-2 h-9">
                       <Upload className="h-4 w-4" />
                       {t('uploadFile')}
@@ -700,6 +718,16 @@ export default function DataContracts() {
         onSubmit={createContract}
       />
 
+      {/* Create from Dataset Dialog */}
+      <CreateContractFromDatasetDialog
+        isOpen={openFromDatasetDialog}
+        onOpenChange={setOpenFromDatasetDialog}
+        onSuccess={(contractId) => {
+          fetchContracts();
+          setOpenFromDatasetDialog(false);
+          navigate(`${pathname}/${contractId}`);
+        }}
+      />
     </div>
   );
 } 

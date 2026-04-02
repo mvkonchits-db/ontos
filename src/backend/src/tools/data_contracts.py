@@ -324,7 +324,7 @@ class CreateDraftDataContractTool(BaseTool):
             
             # Build contract data in ODCS format
             contract_data = {
-                "apiVersion": "v3.1.0",
+                "apiVersion": "v3.0.2",
                 "kind": "DataContract",
                 "name": name,
                 "version": "0.1.0",

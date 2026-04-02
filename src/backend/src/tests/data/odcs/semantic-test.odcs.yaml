@@ -9,7 +9,7 @@ owner: test-user
 tenant: TestTenant
 
 kind: DataContract
-apiVersion: v3.1.0
+apiVersion: v3.0.2
 
 description:
   purpose: Test contract for semantic assignment validation

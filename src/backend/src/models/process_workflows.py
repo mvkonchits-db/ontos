@@ -69,6 +69,7 @@ class EntityType(str, Enum):
     VIEW = "view"
     DATA_CONTRACT = "data_contract"
     DATA_PRODUCT = "data_product"
+    DATASET = "dataset"
     DOMAIN = "domain"
     PROJECT = "project"
     ACCESS_GRANT = "access_grant"  # For access grant request workflows

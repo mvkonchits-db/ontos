@@ -205,13 +205,6 @@ class CachingWorkspaceClient(WorkspaceClient):
                     lambda: list(self._parent._client.schemas.list(catalog_name=catalog_name))
                 )()
 
-            def get(self, full_name: str):
-                """Get a schema by full name (catalog.schema) - cached."""
-                cache_key = f'schemas.get::{full_name}'
-                return self._parent._cache_result(cache_key)(
-                    lambda: self._parent._client.schemas.get(full_name=full_name)
-                )()
-
         return CachedSchemas(self)
 
     @property

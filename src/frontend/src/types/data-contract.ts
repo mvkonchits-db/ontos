@@ -71,7 +71,7 @@ export type ColumnProperty = {
   itemType?: string
   minItems?: number
   maxItems?: number
-  // ODCS additional property fields
+  // ODCS v3.0.2 additional property fields
   businessName?: string
   encryptedName?: string
   criticalDataElement?: boolean
@@ -97,7 +97,7 @@ export type SchemaObject = {
   createdAt?: string
   updatedAt?: string
   tableProperties?: Record<string, any>
-  // ODCS fields
+  // ODCS v3.0.2 fields
   businessName?: string
   physicalType?: string
   dataGranularityDescription?: string
@@ -133,7 +133,7 @@ export type ContractDescription = {
   limitations?: string
 }
 
-// ODCS compliant team member
+// ODCS v3.0.2 compliant team member
 export type TeamMember = {
   username: string // Required by ODCS - maps to email/identifier
   role: string
@@ -171,7 +171,7 @@ export type SLARequirements = {
   dataFreshnessMinutes?: number
 }
 
-// ODCS compliant quality rule (matches backend QualityRule model)
+// ODCS v3.0.2 compliant quality rule (matches backend QualityRule model)
 export type QualityRule = {
   name?: string
   description?: string
@@ -217,7 +217,7 @@ export type ServerConfig = {
   properties?: Record<string, string>
 }
 
-// Full ODCS compliant data contract
+// Full ODCS v3.0.2 compliant data contract
 export interface DataContract {
   id: string
   kind: string

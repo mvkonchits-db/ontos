@@ -1789,26 +1789,9 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
 
     async def initiate_genie_space_creation(self, request: GenieSpaceRequest, user_info: UserInfo, db: Session):
         """Initiates Genie Space creation for selected ODPS data products."""
-        if not self._notifications_manager:
-            logger.error("Cannot initiate Genie Space creation: NotificationsManager not configured.")
-            raise RuntimeError("Notification system is not available.")
-
         user_email = user_info.email
         product_ids_str = ", ".join(request.product_ids)
         logger.info(f"Initiating Genie Space for products: {product_ids_str} by {user_email}")
-
-        # Send initial notification
-        try:
-            await self._notifications_manager.create_notification(
-                db=db,
-                user_id=user_email,
-                title="Genie Space Creation Started",
-                description=f"Genie Space creation for Data Product(s) {product_ids_str} initiated. "
-                           "You will be notified when it's ready.",
-                status="info"
-            )
-        except Exception as e:
-            logger.error(f"Failed to send initial Genie Space notification: {e}", exc_info=True)
 
         # Schedule background task
         asyncio.create_task(self._create_genie_space_task(request.product_ids, user_email))
@@ -1843,22 +1826,40 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
                 # Step 3: Get product details for formatting
                 products = [self._repo.get(db, id=pid) for pid in product_ids if self._repo.get(db, id=pid)]
 
-                # Step 4: Format metadata as instructions
-                instructions = genie_client.format_metadata_for_genie(metadata_map, products)
+                # Step 4: Generate instructions and sample questions (Phase 2: enriched generator)
+                from src.common.genie_instruction_generator import generate_genie_config
+                genie_config = generate_genie_config(
+                    product_ids=product_ids,
+                    db=db,
+                    ws_client=self._ws_client,
+                )
+                instructions = genie_config.get('instructions', '')
+                sample_questions = genie_config.get('sample_questions')
+                # Fallback to basic metadata if generator fails
+                if not instructions:
+                    instructions = genie_client.format_metadata_for_genie(metadata_map, products)
                 logger.info(f"Formatted {len(instructions)} characters of metadata")
 
-                # Step 5: Create Genie Space via API
+                # Step 5: Create Genie Space via data-rooms API
                 space_name = f"Data Product Space ({len(products)} products)"
                 if len(products) == 1:
                     space_name = f"{products[0].name} - Genie Space"
 
                 logger.info(f"Creating Genie Space: {space_name}")
-                result = await genie_client.create_genie_space(
+
+                # Get warehouse ID from settings
+                from src.common.config import get_settings
+                settings = get_settings()
+                warehouse_id = settings.DATABRICKS_WAREHOUSE_ID
+
+                result = genie_client.create_genie_space(
                     ws_client=self._ws_client,
                     name=space_name,
                     datasets=datasets,
+                    warehouse_id=warehouse_id,
                     description=f"Genie Space for {len(products)} Data Product(s)",
-                    instructions=instructions
+                    instructions=instructions,
+                    sample_questions=sample_questions,
                 )
 
                 # Step 6: Persist to database
@@ -1877,33 +1878,10 @@ class DataProductsManager(DeliveryMixin, SearchableAsset):
 
                 logger.info(f"Genie Space persisted: {genie_space_db.id}")
 
-                # Step 7: Send success notification
-                if self._notifications_manager:
-                    await self._notifications_manager.create_notification(
-                        db=db,
-                        user_id=user_email,
-                        title="Genie Space Ready",
-                        description=f"Your Genie Space '{space_name}' has been created with {len(datasets)} datasets.",
-                        link=result['space_url'],
-                        status="success"
-                    )
+                logger.info(f"Genie Space '{space_name}' created successfully: {result['space_url']}")
 
         except Exception as e:
             logger.error(f"Failed to create Genie Space: {e}", exc_info=True)
-
-            # Send failure notification
-            if self._notifications_manager:
-                try:
-                    with session_factory() as db:
-                        await self._notifications_manager.create_notification(
-                            db=db,
-                            user_id=user_email,
-                            title="Genie Space Creation Failed",
-                            description=f"Failed to create Genie Space: {str(e)}",
-                            status="error"
-                        )
-                except Exception as notify_error:
-                    logger.error(f"Failed to send error notification: {notify_error}")
 
             # Persist failed attempt
             try:

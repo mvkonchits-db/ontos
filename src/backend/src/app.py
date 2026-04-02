@@ -32,6 +32,7 @@ from src.routes import (
     data_contracts_routes,
     data_domains_routes,
     data_product_routes,
+    datasets_routes,
     entitlements_routes,
     entitlements_sync_routes,
     estate_manager_routes,
@@ -216,6 +217,7 @@ openapi_tags = [
     {"name": "Projects", "description": "Manage projects within teams"},
     {"name": "Tags", "description": "Manage tags and tag namespaces"},
     {"name": "Costs", "description": "Manage cost items and budgets"},
+    {"name": "Datasets", "description": "Manage datasets and dataset instances"},
     {"name": "Data Contracts", "description": "Manage data contracts for data products"},
     {"name": "Data Products", "description": "Manage data products and subscriptions"},
     
@@ -309,8 +311,11 @@ projects_routes.register_routes(app)
 tags_routes.register_routes(app)
 costs_routes.register_routes(app)
 quality_routes.register_routes(app)
+datasets_routes.register_routes(app)
 data_contracts_routes.register_routes(app)
 data_product_routes.register_routes(app)
+from src.routes import genie_space_routes
+genie_space_routes.register_routes(app)
 from src.routes import approvals_routes
 approvals_routes.register_routes(app)
 

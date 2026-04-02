@@ -1,6 +1,7 @@
 export type OwnerObjectType =
   | 'data_product'
   | 'data_contract'
+  | 'dataset'
   | 'data_domain'
   | 'business_term'
   | 'asset'

@@ -21,9 +21,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { useApi } from '@/hooks/use-api';
 import { useToast } from '@/hooks/use-toast';
-import { useTranslation } from 'react-i18next';
 import { cn } from '@/lib/utils';
-import { useFormatLabel } from '@/lib/format-label';
 import { AssetTypeRead } from '@/types/asset';
 import type { RelationshipDefinition } from '@/types/ontology-schema';
 
@@ -150,8 +148,6 @@ export function AddRelationshipDialog({
 }: AddRelationshipDialogProps) {
   const { get: apiGet, post: apiPost } = useApi();
   const { toast } = useToast();
-  const { i18n } = useTranslation();
-  const formatLabel = useFormatLabel();
 
   // Relationship type state
   const [validRelationships, setValidRelationships] = useState<RelationshipDefinition[]>([]);
@@ -236,14 +232,14 @@ export function AddRelationshipDialog({
     try {
       const iri = `http://ontos.app/ontology#${entityType}`;
       const response = await apiGet<{ type_iri: string; outgoing: RelationshipDefinition[]; incoming: RelationshipDefinition[] }>(
-        `/api/ontology/entity-types/relationships?type_iri=${encodeURIComponent(iri)}&lang=${encodeURIComponent(i18n.language)}`
+        `/api/ontology/entity-types/relationships?type_iri=${encodeURIComponent(iri)}`
       );
       if (!response.error && response.data) {
         setValidRelationships(response.data.outgoing);
       }
     } catch { /* non-critical */ }
     finally { setRelTypesLoading(false); }
-  }, [apiGet, entityType, i18n.language]);
+  }, [apiGet, entityType]);
 
   const fetchAssetTypes = useCallback(async () => {
     setTypesLoading(true);
@@ -443,7 +439,7 @@ export function AddRelationshipDialog({
               <SelectContent>
                 {validRelationships.map((r) => (
                   <SelectItem key={relKey(r)} value={relKey(r)}>
-                    {formatLabel(r.label)} → {r.target_type_label || r.target_type_iri?.split('#')[1] || '?'}
+                    {r.label} → {r.target_type_label || r.target_type_iri?.split('#')[1] || '?'}
                   </SelectItem>
                 ))}
                 {validRelationships.length === 0 && !relTypesLoading && (

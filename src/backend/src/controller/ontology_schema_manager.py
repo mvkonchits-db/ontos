@@ -80,45 +80,6 @@ class OntologySchemaManager:
     def _graph(self) -> Graph:
         return self._smm._graph
 
-    def _get_label(
-        self, subject: URIRef, predicate: URIRef = None, lang: Optional[str] = None
-    ) -> Optional[str]:
-        """Return the best label for *subject* under *predicate*, respecting language.
-
-        Selection order:
-        1. A literal whose ``language`` matches *lang* exactly.
-        2. An untagged (plain) literal.
-        3. The first literal found (any language).
-        4. ``None`` (caller should fall back to ``_local_name``).
-        """
-        if predicate is None:
-            predicate = RDFS.label
-
-        all_labels = list(self._graph.objects(subject, predicate))
-        if not all_labels:
-            return None
-
-        lang_match: Optional[str] = None
-        plain: Optional[str] = None
-        any_val: Optional[str] = None
-
-        for obj in all_labels:
-            val = str(obj)
-            if not any_val:
-                any_val = val
-            if isinstance(obj, Literal):
-                if obj.language:
-                    if lang and obj.language == lang:
-                        lang_match = val
-                else:
-                    if plain is None:
-                        plain = val
-            else:
-                if plain is None:
-                    plain = val
-
-        return lang_match or plain or any_val
-
     # ------------------------------------------------------------------
     # IRI resolution
     # ------------------------------------------------------------------
@@ -149,7 +110,6 @@ class OntologySchemaManager:
         tier: Optional[str] = None,
         category: Optional[str] = None,
         persona: Optional[str] = None,
-        lang: Optional[str] = None,
     ) -> List[EntityTypeDefinition]:
         """Return all classes that have an ontos:modelTier annotation.
 
@@ -177,8 +137,8 @@ class OntologySchemaManager:
             if persona and persona_list and persona not in persona_list:
                 continue
 
-            label = self._get_label(cls, RDFS.label, lang) or _local_name(str(cls))
-            comment = self._get_label(cls, RDFS.comment, lang) or _str_or_none(self._graph.value(cls, RDFS.comment))
+            label = _str_or_none(self._graph.value(cls, RDFS.label)) or _local_name(str(cls))
+            comment = _str_or_none(self._graph.value(cls, RDFS.comment))
 
             display_order_val = self._graph.value(cls, ONTOS.uiDisplayOrder)
             display_order = int(str(display_order_val)) if display_order_val is not None else None
@@ -186,7 +146,7 @@ class OntologySchemaManager:
             parent_cls = self._graph.value(cls, RDFS.subClassOf)
             parent_label = None
             if parent_cls:
-                parent_label = self._get_label(parent_cls, RDFS.label, lang) or _str_or_none(self._graph.value(parent_cls, RDFS.label))
+                parent_label = _str_or_none(self._graph.value(parent_cls, RDFS.label))
 
             results.append(EntityTypeDefinition(
                 iri=str(cls),
@@ -217,7 +177,7 @@ class OntologySchemaManager:
     # Field Schema
     # ------------------------------------------------------------------
 
-    def _get_fields_for_class(self, cls_iri: URIRef, lang: Optional[str] = None) -> List[EntityFieldDefinition]:
+    def _get_fields_for_class(self, cls_iri: URIRef) -> List[EntityFieldDefinition]:
         """Collect all data properties whose rdfs:domain includes cls_iri or any ancestor."""
         ancestors = self._get_ancestor_classes(cls_iri)
         target_classes = {cls_iri} | ancestors
@@ -250,14 +210,13 @@ class OntologySchemaManager:
             options_str = _str_or_none(self._graph.value(prop, ONTOS.uiSelectOptions))
             select_options = [o.strip() for o in options_str.split(",")] if options_str else None
 
-            label = self._get_label(prop, RDFS.label, lang) or _local_name(prop_iri)
-            comment = self._get_label(prop, RDFS.comment, lang) or _str_or_none(self._graph.value(prop, RDFS.comment))
+            label = _str_or_none(self._graph.value(prop, RDFS.label)) or _local_name(prop_iri)
 
             fields.append(EntityFieldDefinition(
                 iri=prop_iri,
                 name=_local_name(prop_iri),
                 label=label,
-                comment=comment,
+                comment=_str_or_none(self._graph.value(prop, RDFS.comment)),
                 range_type=range_type,
                 field_type=field_type,
                 field_order=field_order,
@@ -269,7 +228,7 @@ class OntologySchemaManager:
         fields.sort(key=lambda f: f.field_order)
         return fields
 
-    def get_entity_type_schema(self, type_iri: str, lang: Optional[str] = None) -> Optional[EntityTypeSchema]:
+    def get_entity_type_schema(self, type_iri: str) -> Optional[EntityTypeSchema]:
         """Build a complete field schema for an entity type.
 
         Returns field definitions and a JSON Schema for validation.
@@ -280,8 +239,8 @@ class OntologySchemaManager:
         if not model_tier:
             return None
 
-        label = self._get_label(cls, RDFS.label, lang) or _local_name(type_iri)
-        fields = self._get_fields_for_class(cls, lang=lang)
+        label = _str_or_none(self._graph.value(cls, RDFS.label)) or _local_name(type_iri)
+        fields = self._get_fields_for_class(cls)
 
         json_schema = self._fields_to_json_schema(type_iri, label, fields)
 
@@ -337,7 +296,7 @@ class OntologySchemaManager:
     # Relationships
     # ------------------------------------------------------------------
 
-    def get_relationships(self, type_iri: str, lang: Optional[str] = None) -> EntityRelationships:
+    def get_relationships(self, type_iri: str) -> EntityRelationships:
         """Return all outgoing and incoming relationships for an entity type."""
         type_iri = self.resolve_type_iri(type_iri)
         cls = URIRef(type_iri)
@@ -351,8 +310,8 @@ class OntologySchemaManager:
             domains = set(self._graph.objects(prop, RDFS.domain))
             ranges = set(self._graph.objects(prop, RDFS.range))
 
-            ui_label = self._get_label(prop, ONTOS.uiLabel, lang) or _str_or_none(self._graph.value(prop, ONTOS.uiLabel))
-            rdfs_label = self._get_label(prop, RDFS.label, lang) or _str_or_none(self._graph.value(prop, RDFS.label))
+            ui_label = _str_or_none(self._graph.value(prop, ONTOS.uiLabel))
+            rdfs_label = _str_or_none(self._graph.value(prop, RDFS.label))
             label = ui_label or rdfs_label or _local_name(str(prop))
             inverse_label = _str_or_none(self._graph.value(prop, ONTOS.inverseLabel))
             cardinality = _str_or_none(self._graph.value(prop, ONTOS.cardinality)) or "0..*"
@@ -360,14 +319,14 @@ class OntologySchemaManager:
 
             if domains & target_classes:
                 for rng in ranges:
-                    rng_label = self._get_label(rng, RDFS.label, lang) or _str_or_none(self._graph.value(rng, RDFS.label))
+                    rng_label = _str_or_none(self._graph.value(rng, RDFS.label))
                     outgoing.append(RelationshipDefinition(
                         property_iri=str(prop),
                         property_name=_local_name(str(prop)),
                         label=label,
                         inverse_label=inverse_label,
                         source_type_iri=type_iri,
-                        source_type_label=self._get_label(cls, RDFS.label, lang),
+                        source_type_label=_str_or_none(self._graph.value(cls, RDFS.label)),
                         target_type_iri=str(rng),
                         target_type_label=rng_label,
                         cardinality=cardinality,
@@ -377,7 +336,7 @@ class OntologySchemaManager:
 
             if ranges & target_classes:
                 for dom in domains:
-                    dom_label = self._get_label(dom, RDFS.label, lang) or _str_or_none(self._graph.value(dom, RDFS.label))
+                    dom_label = _str_or_none(self._graph.value(dom, RDFS.label))
                     incoming.append(RelationshipDefinition(
                         property_iri=str(prop),
                         property_name=_local_name(str(prop)),
@@ -386,7 +345,7 @@ class OntologySchemaManager:
                         source_type_iri=str(dom),
                         source_type_label=dom_label,
                         target_type_iri=type_iri,
-                        target_type_label=self._get_label(cls, RDFS.label, lang),
+                        target_type_label=_str_or_none(self._graph.value(cls, RDFS.label)),
                         cardinality=cardinality,
                         display_context=display_ctx,
                         direction="incoming",
@@ -402,12 +361,12 @@ class OntologySchemaManager:
     # Hierarchy Relationships (instance-level)
     # ------------------------------------------------------------------
 
-    def get_hierarchy_relationships(self, type_iri: str, lang: Optional[str] = None) -> List[RelationshipDefinition]:
+    def get_hierarchy_relationships(self, type_iri: str) -> List[RelationshipDefinition]:
         """Return only outgoing relationships marked ontos:isHierarchical for a given type.
 
         These define which children an entity of this type can have in the hierarchy browser.
         """
-        all_rels = self.get_relationships(type_iri, lang=lang)
+        all_rels = self.get_relationships(type_iri)
         hierarchical: List[RelationshipDefinition] = []
 
         for rel in all_rels.outgoing:
@@ -418,12 +377,12 @@ class OntologySchemaManager:
 
         return hierarchical
 
-    def get_hierarchy_relationships_inverse(self, type_iri: str, lang: Optional[str] = None) -> List[RelationshipDefinition]:
+    def get_hierarchy_relationships_inverse(self, type_iri: str) -> List[RelationshipDefinition]:
         """Return incoming hierarchical relationships (where this type is a child).
 
         E.g. for System, returns belongsToSystem incoming relationships (Assets that belong to System).
         """
-        all_rels = self.get_relationships(type_iri, lang=lang)
+        all_rels = self.get_relationships(type_iri)
         hierarchical: List[RelationshipDefinition] = []
 
         for rel in all_rels.incoming:
@@ -469,7 +428,7 @@ class OntologySchemaManager:
     # Class Hierarchy (type-level)
     # ------------------------------------------------------------------
 
-    def get_hierarchy(self, root_iri: Optional[str] = None, lang: Optional[str] = None) -> List[EntityHierarchyNode]:
+    def get_hierarchy(self, root_iri: Optional[str] = None) -> List[EntityHierarchyNode]:
         """Build the class hierarchy tree.
 
         If root_iri is given, returns the subtree rooted at that class.
@@ -480,16 +439,16 @@ class OntologySchemaManager:
         else:
             root = ONTOS.Entity
 
-        return [self._build_hierarchy_node(root, lang=lang)]
+        return [self._build_hierarchy_node(root)]
 
-    def _build_hierarchy_node(self, cls: URIRef, lang: Optional[str] = None) -> EntityHierarchyNode:
-        label = self._get_label(cls, RDFS.label, lang) or _local_name(str(cls))
+    def _build_hierarchy_node(self, cls: URIRef) -> EntityHierarchyNode:
+        label = _str_or_none(self._graph.value(cls, RDFS.label)) or _local_name(str(cls))
         model_tier = _str_or_none(self._graph.value(cls, ONTOS.modelTier))
         ui_icon = _str_or_none(self._graph.value(cls, ONTOS.uiIcon))
 
         children: List[EntityHierarchyNode] = []
         for child in self._graph.subjects(RDFS.subClassOf, cls):
-            children.append(self._build_hierarchy_node(child, lang=lang))
+            children.append(self._build_hierarchy_node(child))
 
         children.sort(key=lambda n: n.label)
 

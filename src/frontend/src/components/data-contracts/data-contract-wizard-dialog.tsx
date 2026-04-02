@@ -26,7 +26,7 @@ interface SemanticConcept {
   description?: string
   type?: string
 }
-// ODCS v3.1.0 compliant logical types (exact match with spec)
+// ODCS v3.0.2 compliant logical types (exact match with spec)
 const LOGICAL_TYPES = [
   'string',
   'date',
@@ -37,13 +37,13 @@ const LOGICAL_TYPES = [
   'boolean'
 ]
 
-// ODCS v3.1.0 quality framework constants
+// ODCS v3.0.2 quality framework constants
 const QUALITY_DIMENSIONS = ['accuracy', 'completeness', 'conformity', 'consistency', 'coverage', 'timeliness', 'uniqueness']
 const QUALITY_TYPES = ['text', 'library', 'sql', 'custom']
 const QUALITY_SEVERITIES = ['info', 'warning', 'error']
 const BUSINESS_IMPACTS = ['operational', 'regulatory']
 
-// ODCS v3.1.0 server types
+// ODCS v3.0.2 server types
 const ODCS_SERVER_TYPES = [
   'api', 'athena', 'azure', 'bigquery', 'clickhouse', 'databricks', 'denodo', 'dremio',
   'duckdb', 'glue', 'cloudsql', 'db2', 'informix', 'kafka', 'kinesis', 'local',
@@ -52,7 +52,7 @@ const ODCS_SERVER_TYPES = [
 ]
 const ENVIRONMENTS = ['production', 'staging', 'development', 'test']
 
-// ODCS v3.1.0 physical types for schema objects
+// ODCS v3.0.2 physical types for schema objects
 const PHYSICAL_TYPES = ['table', 'view', 'materialized_view', 'external_table', 'managed_table', 'streaming_table']
 
 export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmit, initial }: WizardProps) {
@@ -122,7 +122,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
     classification?: string;
     examples?: string;
     semanticConcepts?: SemanticConcept[];
-    // ODCS v3.1.0 additional property fields
+    // ODCS v3.0.2 additional property fields
     businessName?: string;
     encryptedName?: string;
     criticalDataElement?: boolean;
@@ -142,7 +142,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
     createdAt?: string;
     updatedAt?: string;
     tableProperties?: Record<string, any>;
-    // ODCS v3.1.0 fields
+    // ODCS v3.0.2 fields
     businessName?: string;
     physicalType?: string; // table, view, materialized_view, etc.
     dataGranularityDescription?: string;
@@ -377,7 +377,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
         schema: schemaObjects.map((o) => ({
           name: o.name,
           physicalName: o.physicalName,
-          // ODCS v3.1.0 schema object fields
+          // ODCS v3.0.2 schema object fields
           businessName: o.businessName,
           physicalType: o.physicalType,
           description: o.description,
@@ -458,7 +458,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
         schema: schemaObjects.map((o) => ({
           name: o.name,
           physicalName: o.physicalName,
-          // ODCS v3.1.0 schema object fields
+          // ODCS v3.0.2 schema object fields
           businessName: o.businessName,
           physicalType: o.physicalType,
           description: o.description,
@@ -507,7 +507,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
           <DialogTitle className="text-2xl">
             {name ? `Data Contract Wizard: ${name}` : 'Data Contract Wizard'}
           </DialogTitle>
-          <DialogDescription className="text-base">Build a contract incrementally according to ODCS v3.1.0</DialogDescription>
+          <DialogDescription className="text-base">Build a contract incrementally according to ODCS v3.0.2</DialogDescription>
           
           {/* Progress Indicator */}
           <div className="mt-4">
@@ -763,7 +763,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
                       </div>
                     </div>
 
-                    {/* ODCS v3.1.0 Schema Object Fields */}
+                    {/* ODCS v3.0.2 Schema Object Fields */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
                       <div>
                         <Label className="text-sm font-medium">Business Name (ODCS)</Label>
@@ -1170,7 +1170,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
                                         />
                                       </div>
 
-                                      {/* ODCS v3.1.0 Property Fields */}
+                                      {/* ODCS v3.0.2 Property Fields */}
                                       <div className="lg:col-span-4">
                                         <Label className="text-[11px]">Business Name (ODCS)</Label>
                                         <Input
@@ -1268,7 +1268,7 @@ export default function DataContractWizardDialog({ isOpen, onOpenChange, onSubmi
             <div className="flex justify-between items-center p-4 bg-muted/50 rounded-lg">
               <div>
                 <div className="font-medium">ODCS Quality Framework</div>
-                <div className="text-sm text-muted-foreground">Define quality rules using ODCS v3.1.0 dimensions and types</div>
+                <div className="text-sm text-muted-foreground">Define quality rules using ODCS v3.0.2 dimensions and types</div>
               </div>
               <Button type="button" variant="default" onClick={addQualityRule} className="gap-2">
                 <span>➕</span> Add Quality Rule

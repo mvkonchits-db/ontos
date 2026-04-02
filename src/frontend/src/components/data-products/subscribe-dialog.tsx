@@ -19,6 +19,8 @@ interface SubscribeDialogProps {
   productId: string;
   productName: string;
   onSuccess?: () => void;
+  /** If true, subscribes to a dataset instead of a data product */
+  isDataset?: boolean;
 }
 
 export default function SubscribeDialog({
@@ -27,13 +29,16 @@ export default function SubscribeDialog({
   productId,
   productName,
   onSuccess,
+  isDataset = false,
 }: SubscribeDialogProps) {
   const { toast } = useToast();
   const [reason, setReason] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const entityType = 'Data Product';
-  const apiEndpoint = `/api/data-products/${productId}/subscribe`;
+  const entityType = isDataset ? 'Dataset' : 'Data Product';
+  const apiEndpoint = isDataset 
+    ? `/api/datasets/${productId}/subscribe`
+    : `/api/data-products/${productId}/subscribe`;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);

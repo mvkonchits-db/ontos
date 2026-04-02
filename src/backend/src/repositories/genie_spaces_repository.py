@@ -82,6 +82,29 @@ class GenieSpaceRepository(CRUDBase[GenieSpaceDb, GenieSpaceCreate, GenieSpaceUp
             db.rollback()
             raise
 
+    def delete_by_space_id(self, db: Session, space_id: str) -> bool:
+        """
+        Delete a Genie Space by its Databricks space_id.
+
+        Args:
+            db: Database session
+            space_id: Databricks space ID
+
+        Returns:
+            True if deleted, False if not found
+        """
+        logger.debug(f"Deleting Genie Space with space_id: {space_id}")
+        try:
+            obj = self.get_by_space_id(db, space_id)
+            if obj:
+                db.delete(obj)
+                return True
+            return False
+        except Exception as e:
+            logger.error(f"Error deleting Genie Space by space_id {space_id}: {e}", exc_info=True)
+            db.rollback()
+            raise
+
     def get_active_spaces(self, db: Session, limit: int = 100) -> List[GenieSpaceDb]:
         """
         Get all active Genie Spaces.

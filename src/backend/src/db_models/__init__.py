@@ -18,6 +18,7 @@ from . import data_contracts
 from . import data_domains
 from . import data_products
 from . import data_quality_checks
+from . import datasets
 from . import genie_spaces
 from . import llm_sessions
 from . import mcp_tokens

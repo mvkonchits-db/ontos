@@ -2,7 +2,7 @@
 Data Catalog Manager
 
 Provides functionality for the Data Dictionary feature:
-- Browse columns from REGISTERED assets (Data Contracts only)
+- Browse columns from REGISTERED assets (Data Contracts + Datasets only)
 - Search columns by name across registered assets
 - Get table details with lineage
 
@@ -31,6 +31,7 @@ from src.models.data_catalog import (
     ImpactAnalysis,
 )
 from src.controller.lineage_service import LineageService
+from src.controller.datasets_manager import DatasetsManager
 from src.controller.data_contracts_manager import DataContractsManager
 
 logger = get_logger(__name__)
@@ -40,8 +41,9 @@ class DataCatalogManager:
     """
     Manager for Data Dictionary / Data Catalog operations.
     
-    Only indexes assets that are REGISTERED in the application
-    (tables/views referenced in Data Contracts).
+    Only indexes assets that are REGISTERED in the application:
+    - Tables/views referenced in Data Contracts
+    - Tables/views registered as Datasets
     
     Does NOT scan the entire Unity Catalog.
     """
@@ -50,6 +52,7 @@ class DataCatalogManager:
         self,
         obo_client: WorkspaceClient,
         db_session: Session,
+        datasets_manager: Optional[DatasetsManager] = None,
         contracts_manager: Optional[DataContractsManager] = None,
         settings: Optional[Settings] = None
     ):
@@ -59,11 +62,13 @@ class DataCatalogManager:
         Args:
             obo_client: OBO workspace client for user-specific UC access
             db_session: Database session for querying registered assets
+            datasets_manager: Manager for Datasets (registered UC tables)
             contracts_manager: Manager for Data Contracts
             settings: Application settings
         """
         self.client = obo_client
         self.db = db_session
+        self.datasets_manager = datasets_manager
         self.contracts_manager = contracts_manager
         self.settings = settings
         self.lineage_service = LineageService(obo_client)

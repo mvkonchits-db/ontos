@@ -7,7 +7,7 @@
 
 id: mdm-demo-crm-customers-001
 version: '1.0.0'
-apiVersion: v3.1.0
+apiVersion: v3.0.2
 kind: DataContract
 name: CRM Customers Contract
 status: active
