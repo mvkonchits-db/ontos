@@ -9,6 +9,7 @@ This document covers all configuration options for running Ontos, including envi
 - [Local PostgreSQL Setup](#local-postgresql-setup)
 - [Lakebase Setup (Production)](#lakebase-setup-production)
 - [Default Application Roles](#default-application-roles)
+- [Assigning Roles: Groups vs Users](#assigning-roles-groups-vs-users)
 
 ---
 
@@ -273,6 +274,50 @@ On first startup, if no roles exist, the application creates default roles:
 | **Security Officer** | Administrative access to security and entitlements features. |
 
 These roles can be viewed and modified in **Settings → RBAC** after initial startup.
+
+---
+
+## Assigning Roles: Groups vs Users
+
+App roles support two parallel assignment mechanisms. A role matches the user
+when EITHER condition holds (case-insensitive):
+
+- The user's Databricks groups intersect the role's `assigned_groups`, OR
+- The user's email is in the role's `assigned_users`.
+
+Both lists can be edited per role. Permissions from all matching roles are
+unioned by taking the highest level per feature.
+
+### When to use groups
+
+- **Auto-revocation when membership changes upstream.** Group membership is
+  re-resolved from Databricks (and ultimately your IdP via SCIM) on every
+  login, so removing a user from a group in your IdP automatically removes
+  the role assignment on next login.
+- **Service principals.** Always assign SPs via groups — their synthetic
+  emails are unstable and not intended for direct assignment.
+- **Team-scale assignments.** Cleaner to manage one group with N members
+  than N individual emails on a role.
+
+### When to use users (`assigned_users`)
+
+- **Ad-hoc grants** without creating or modifying a Databricks group
+  (e.g., giving one engineer Data Steward access for a sprint).
+- **Workspaces where SCIM group sync isn't fully wired** — direct email
+  assignment works without group infrastructure.
+- **Workspace-portable assignments** — emails come from your IdP and stay
+  stable across workspaces; groups are workspace-local.
+
+### Caveats
+
+- A direct email assignment **does not** auto-revoke when the person leaves
+  your organization. They will, of course, fail to authenticate at the
+  Databricks layer (SSO denies them) so they cannot reach Ontos — but the
+  stale entry remains in the role's `assigned_users` list. Periodic cleanup
+  is an admin-hygiene task.
+- The email stored must match exactly what your IdP issues as the primary
+  email claim (Ontos normalizes input on save: trims whitespace, lowercases,
+  dedupes). For EMU IdPs this may differ from the human-friendly address.
 
 ---
 

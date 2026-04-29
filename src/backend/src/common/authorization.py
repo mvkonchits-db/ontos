@@ -313,11 +313,16 @@ class PermissionChecker:
         """Performs the permission check when the dependency is called."""
         logger.debug("Checking permission for feature '%s' (level: '%s') for user '%s'", self.feature_id, self.required_level.value, user_details.user or user_details.email)
 
-        if not user_details.groups:
-            logger.warning("User '%s' has no groups. Denying access for '%s'", user_details.user or user_details.email, self.feature_id)
+        # No-groups guard relaxed (#197): a user with empty groups but a direct email
+        # assignment via role.assigned_users must still be evaluated. The denial path
+        # for unrelated users is the existing "Insufficient permissions" branch below
+        # — driven by the auth manager returning NONE for a feature, not by a hard
+        # short-circuit at the door.
+        if not user_details.groups and not user_details.email:
+            logger.warning("User has neither groups nor email; denying '%s'", self.feature_id)
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="User has no assigned groups, cannot determine permissions."
+                detail="Cannot determine user identity for permission check."
             )
 
         try:
@@ -343,7 +348,8 @@ class PermissionChecker:
             else:
                 effective_permissions = auth_manager.get_user_effective_permissions(
                     user_details.groups,
-                    team_role_override
+                    team_role_override,
+                    user_email=user_details.email,
                 )
             has_required_permission = auth_manager.has_permission(
                 effective_permissions,
@@ -420,16 +426,19 @@ class ApprovalChecker:
                 ap = (role.approval_privileges or {}) if role else {}
                 approval = bool(ap.get(self.entity, False))
             else:
-                # Union across roles assigned to user's groups
-                # Normalize to lowercase for case-insensitive matching
+                # Union across roles matched by groups OR direct email assignment (#197).
+                # Normalize to lowercase for case-insensitive matching.
                 user_groups = set(g.lower() for g in (user_details.groups or []))
+                user_email_norm = (user_details.email or "").strip().lower() or None
                 roles = settings_manager.list_app_roles()
                 ap_union: dict[ApprovalEntity, bool] = {}
                 for role in roles:
                     try:
-                        # Normalize role groups to lowercase for case-insensitive matching
                         role_groups = set(g.lower() for g in (role.assigned_groups or []))
-                        if not role_groups.intersection(user_groups):
+                        role_users = set(u.lower() for u in (getattr(role, 'assigned_users', None) or []))
+                        group_match = bool(role_groups.intersection(user_groups))
+                        email_match = bool(user_email_norm and user_email_norm in role_users)
+                        if not (group_match or email_match):
                             continue
                         for k, v in (role.approval_privileges or {}).items():
                             ap_union[ApprovalEntity(k)] = ap_union.get(ApprovalEntity(k), False) or bool(v)

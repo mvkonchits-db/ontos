@@ -282,8 +282,178 @@ class TestAuthorizationManager:
         mock_settings_manager.list_app_roles.return_value = [role_with_unknown]
         
         result = manager.get_user_effective_permissions(["test"])
-        
+
         # Should process valid features and skip unknown ones
         assert result["data-products"] == FeatureAccessLevel.READ_WRITE
         assert "unknown-feature-xyz" not in result or result.get("unknown-feature-xyz") == FeatureAccessLevel.NONE
+
+
+class TestAuthorizationByEmail:
+    """Email-based role matching via assigned_users (issue #197).
+
+    Roles match the user when EITHER groups intersect assigned_groups OR
+    user email is in assigned_users. Group-only matching must keep working
+    unchanged; email-only matching is the new path.
+    """
+
+    @pytest.fixture
+    def mock_settings_manager(self):
+        return Mock()
+
+    @pytest.fixture
+    def manager(self, mock_settings_manager):
+        return AuthorizationManager(settings_manager=mock_settings_manager)
+
+    @pytest.fixture
+    def role_factory(self):
+        def make(name="TestRole", assigned_groups=None, assigned_users=None,
+                 feature_permissions=None):
+            return AppRole(
+                id=uuid.uuid4(),
+                name=name,
+                description=f"{name} (test)",
+                assigned_groups=list(assigned_groups or []),
+                assigned_users=list(assigned_users or []),
+                feature_permissions=feature_permissions or {
+                    "data-products": FeatureAccessLevel.READ_ONLY,
+                },
+                home_sections=[],
+                approval_privileges={},
+            )
+        return make
+
+    # ------------------------------------------------------------------
+    # The full match-or-deny matrix
+    # ------------------------------------------------------------------
+
+    def test_email_only_match_grants_access(self, manager, mock_settings_manager, role_factory):
+        """User with no groups but email in assigned_users gets the role's permissions."""
+        role = role_factory(assigned_users=["alice@example.com"])
+        mock_settings_manager.list_app_roles.return_value = [role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=[],
+            user_email="alice@example.com",
+        )
+
+        assert result["data-products"] == FeatureAccessLevel.READ_ONLY
+
+    def test_group_only_match_still_works(self, manager, mock_settings_manager, role_factory):
+        """Existing group-based assignment must remain unchanged when assigned_users is empty."""
+        role = role_factory(assigned_groups=["data-team"])
+        mock_settings_manager.list_app_roles.return_value = [role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=["data-team"],
+            user_email="alice@example.com",
+        )
+
+        assert result["data-products"] == FeatureAccessLevel.READ_ONLY
+
+    def test_both_match_idempotent(self, manager, mock_settings_manager, role_factory):
+        """When both groups and email match the same role, permissions are not double-counted."""
+        role = role_factory(
+            assigned_groups=["data-team"],
+            assigned_users=["alice@example.com"],
+            feature_permissions={"data-products": FeatureAccessLevel.READ_WRITE},
+        )
+        mock_settings_manager.list_app_roles.return_value = [role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=["data-team"],
+            user_email="alice@example.com",
+        )
+
+        assert result["data-products"] == FeatureAccessLevel.READ_WRITE
+
+    def test_email_match_is_case_insensitive(self, manager, mock_settings_manager, role_factory):
+        """Email matching tolerates casing differences between input and stored value."""
+        role = role_factory(assigned_users=["alice@example.com"])
+        mock_settings_manager.list_app_roles.return_value = [role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=[],
+            user_email="ALICE@Example.COM",
+        )
+
+        assert result["data-products"] == FeatureAccessLevel.READ_ONLY
+
+    def test_email_match_strips_whitespace(self, manager, mock_settings_manager, role_factory):
+        """Stray whitespace in input email does not block a legitimate match."""
+        role = role_factory(assigned_users=["alice@example.com"])
+        mock_settings_manager.list_app_roles.return_value = [role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=[],
+            user_email="  alice@example.com  ",
+        )
+
+        assert result["data-products"] == FeatureAccessLevel.READ_ONLY
+
+    # ------------------------------------------------------------------
+    # The CANARY — must not regress
+    # ------------------------------------------------------------------
+
+    def test_unrelated_user_no_groups_no_email_match_denied(
+        self, manager, mock_settings_manager, role_factory
+    ):
+        """SECURITY CANARY: a user with no groups and an email that matches no role
+        must NOT receive any permissions. The no-groups guard relaxation must not
+        open a hole."""
+        role = role_factory(assigned_users=["alice@example.com"])
+        mock_settings_manager.list_app_roles.return_value = [role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=[],
+            user_email="mallory@example.com",
+        )
+
+        assert all(level == FeatureAccessLevel.NONE for level in result.values()), (
+            "SECURITY: unrelated user with no groups gained permissions"
+        )
+
+    def test_no_groups_no_email_returns_none_for_all(
+        self, manager, mock_settings_manager, role_factory
+    ):
+        """A user with neither groups nor email gets NONE for every feature."""
+        role = role_factory(assigned_groups=["data-team"], assigned_users=["alice@example.com"])
+        mock_settings_manager.list_app_roles.return_value = [role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=[],
+            user_email=None,
+        )
+
+        assert all(level == FeatureAccessLevel.NONE for level in result.values())
+
+    def test_email_in_one_role_groups_in_another_unions_permissions(
+        self, manager, mock_settings_manager, role_factory
+    ):
+        """Two distinct roles matched via different paths union to the highest level per feature."""
+        role_via_email = role_factory(
+            name="Reader",
+            assigned_users=["alice@example.com"],
+            feature_permissions={
+                "data-products": FeatureAccessLevel.READ_ONLY,
+                "data-contracts": FeatureAccessLevel.READ_ONLY,
+            },
+        )
+        role_via_group = role_factory(
+            name="Writer",
+            assigned_groups=["data-writers"],
+            feature_permissions={
+                "data-products": FeatureAccessLevel.READ_WRITE,  # higher — should win
+                "teams": FeatureAccessLevel.READ_ONLY,
+            },
+        )
+        mock_settings_manager.list_app_roles.return_value = [role_via_email, role_via_group]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=["data-writers"],
+            user_email="alice@example.com",
+        )
+
+        assert result["data-products"] == FeatureAccessLevel.READ_WRITE   # from group role
+        assert result["data-contracts"] == FeatureAccessLevel.READ_ONLY    # only from email role
+        assert result["teams"] == FeatureAccessLevel.READ_ONLY             # only from group role
 
