@@ -457,3 +457,247 @@ class TestAuthorizationByEmail:
         assert result["data-contracts"] == FeatureAccessLevel.READ_ONLY    # only from email role
         assert result["teams"] == FeatureAccessLevel.READ_ONLY             # only from group role
 
+    # ------------------------------------------------------------------
+    # Team-role override + email assignment precedence (#197 follow-up)
+    # ------------------------------------------------------------------
+
+    def test_team_role_override_wins_over_email_assignment(
+        self, manager, mock_settings_manager, role_factory
+    ):
+        """Team role override is unconditional — even if the user has a higher-priv
+        role via email assignment, the override takes full precedence.
+
+        Locks in the documented behavior: team-role-override branch returns early
+        BEFORE the OR-matching loop runs, so email-based matching never gets a
+        chance to elevate the user."""
+        # Email-assigned role grants WRITE
+        email_role = role_factory(
+            name="EmailAssignedWriter",
+            assigned_users=["alice@example.com"],
+            feature_permissions={
+                "data-products": FeatureAccessLevel.READ_WRITE,
+            },
+        )
+        # Team override role grants only READ_ONLY (lower than email-assigned!)
+        override_role = role_factory(
+            name="ReadOnlyOverride",
+            assigned_groups=[],
+            assigned_users=[],
+            feature_permissions={
+                "data-products": FeatureAccessLevel.READ_ONLY,
+            },
+        )
+        mock_settings_manager.list_app_roles.return_value = [email_role, override_role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=[],
+            user_email="alice@example.com",
+            team_role_override="ReadOnlyOverride",
+        )
+
+        # Override wins: the email-based WRITE permission must NOT leak through.
+        assert result["data-products"] == FeatureAccessLevel.READ_ONLY, (
+            f"team_role_override must take precedence over email assignment; "
+            f"got data-products={result['data-products']}"
+        )
+
+    def test_team_role_override_missing_falls_back_to_email_match(
+        self, manager, mock_settings_manager, role_factory
+    ):
+        """If the named override role doesn't exist, fall back to normal matching
+        (groups + email). This is the documented fallback behavior — the override
+        is best-effort, not a hard requirement."""
+        email_role = role_factory(
+            name="DataConsumer",
+            assigned_users=["alice@example.com"],
+            feature_permissions={
+                "data-products": FeatureAccessLevel.READ_ONLY,
+            },
+        )
+        mock_settings_manager.list_app_roles.return_value = [email_role]
+
+        result = manager.get_user_effective_permissions(
+            user_groups=[],
+            user_email="alice@example.com",
+            team_role_override="NonexistentRole",  # not in list_app_roles
+        )
+
+        # Override is missing — falls back to email match → DataConsumer perms apply
+        assert result["data-products"] == FeatureAccessLevel.READ_ONLY
+
+
+class TestApprovalCheckerEmailMatch:
+    """ApprovalChecker.__call__ direct unit tests (issue #197 follow-up).
+
+    Hits the OR-matching code path inside ApprovalChecker that we previously
+    only covered indirectly via AuthorizationManager. Constructed deliberately
+    to bypass FastAPI dep resolution (audit_manager etc. are not relevant here)
+    and exercise the exact branch added in A2.
+    """
+
+    @pytest.fixture
+    def mock_settings_manager(self):
+        m = Mock()
+        # Default: no role override applied
+        m.get_applied_role_override_for_user.return_value = None
+        return m
+
+    @pytest.fixture
+    def approval_role_factory(self):
+        from src.models.settings import ApprovalEntity
+
+        def make(name, assigned_groups=None, assigned_users=None, can_approve_contracts=False,
+                 can_approve_products=False):
+            return AppRole(
+                id=uuid.uuid4(),
+                name=name,
+                description=f"{name} (approval test)",
+                assigned_groups=list(assigned_groups or []),
+                assigned_users=list(assigned_users or []),
+                feature_permissions={},
+                home_sections=[],
+                approval_privileges={
+                    ApprovalEntity.CONTRACTS: can_approve_contracts,
+                    ApprovalEntity.PRODUCTS: can_approve_products,
+                },
+            )
+        return make
+
+    def test_approval_granted_via_email_assignment(
+        self, mock_settings_manager, approval_role_factory
+    ):
+        """Email-only user with approval privilege via assigned_users gets through."""
+        import asyncio
+        from src.common.authorization import ApprovalChecker
+        from src.models.users import UserInfo
+        from src.models.settings import ApprovalEntity
+        from unittest.mock import Mock as _Mock
+
+        approver_role = approval_role_factory(
+            name="ContractApprover",
+            assigned_users=["alice@example.com"],
+            can_approve_contracts=True,
+        )
+        mock_settings_manager.list_app_roles.return_value = [approver_role]
+
+        checker = ApprovalChecker(ApprovalEntity.CONTRACTS)
+        alice = UserInfo(
+            email="alice@example.com",
+            username="alice",
+            user="Alice",
+            ip="127.0.0.1",
+            groups=[],  # no groups
+        )
+
+        # Should not raise — approval granted
+        asyncio.run(
+            checker(request=_Mock(), user_details=alice, settings_manager=mock_settings_manager)
+        )
+
+    def test_approval_denied_for_unrelated_user_canary(
+        self, mock_settings_manager, approval_role_factory
+    ):
+        """SECURITY CANARY: ApprovalChecker — unrelated user with no groups must
+        NOT receive approval privilege via the OR-matching path."""
+        import asyncio
+        from src.common.authorization import ApprovalChecker
+        from src.models.users import UserInfo
+        from src.models.settings import ApprovalEntity
+        from fastapi import HTTPException
+        from unittest.mock import Mock as _Mock
+
+        approver_role = approval_role_factory(
+            name="ContractApprover",
+            assigned_users=["alice@example.com"],
+            can_approve_contracts=True,
+        )
+        mock_settings_manager.list_app_roles.return_value = [approver_role]
+
+        checker = ApprovalChecker(ApprovalEntity.CONTRACTS)
+        mallory = UserInfo(
+            email="mallory@example.com",  # not in assigned_users
+            username="mallory",
+            user="Mallory",
+            ip="127.0.0.1",
+            groups=[],
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            asyncio.run(
+                checker(
+                    request=_Mock(),
+                    user_details=mallory,
+                    settings_manager=mock_settings_manager,
+                )
+            )
+        assert exc_info.value.status_code == 403, (
+            f"SECURITY: ApprovalChecker did not deny unrelated user "
+            f"(got status {exc_info.value.status_code})"
+        )
+
+    def test_approval_via_email_case_insensitive(
+        self, mock_settings_manager, approval_role_factory
+    ):
+        """Email match for approval is case-insensitive on both sides."""
+        import asyncio
+        from src.common.authorization import ApprovalChecker
+        from src.models.users import UserInfo
+        from src.models.settings import ApprovalEntity
+        from unittest.mock import Mock as _Mock
+
+        approver_role = approval_role_factory(
+            name="ContractApprover",
+            assigned_users=["alice@example.com"],
+            can_approve_contracts=True,
+        )
+        mock_settings_manager.list_app_roles.return_value = [approver_role]
+
+        checker = ApprovalChecker(ApprovalEntity.CONTRACTS)
+        alice_upper = UserInfo(
+            email="ALICE@Example.COM",
+            username="alice",
+            user="Alice (mixed case email)",
+            ip="127.0.0.1",
+            groups=[],
+        )
+
+        # Must not raise — case-insensitive match grants approval
+        asyncio.run(
+            checker(
+                request=_Mock(), user_details=alice_upper, settings_manager=mock_settings_manager
+            )
+        )
+
+    def test_approval_granted_via_group_when_assigned_users_empty(
+        self, mock_settings_manager, approval_role_factory
+    ):
+        """Existing group-based approval path must keep working unchanged
+        when assigned_users is empty (regression guard for #197)."""
+        import asyncio
+        from src.common.authorization import ApprovalChecker
+        from src.models.users import UserInfo
+        from src.models.settings import ApprovalEntity
+        from unittest.mock import Mock as _Mock
+
+        approver_role = approval_role_factory(
+            name="ContractApprover",
+            assigned_groups=["governance-team"],
+            assigned_users=[],
+            can_approve_contracts=True,
+        )
+        mock_settings_manager.list_app_roles.return_value = [approver_role]
+
+        checker = ApprovalChecker(ApprovalEntity.CONTRACTS)
+        bob = UserInfo(
+            email="bob@example.com",
+            username="bob",
+            user="Bob",
+            ip="127.0.0.1",
+            groups=["governance-team"],
+        )
+
+        # Group match must still grant approval — ensures A2's OR didn't break the AND-path
+        asyncio.run(
+            checker(request=_Mock(), user_details=bob, settings_manager=mock_settings_manager)
+        )
+
