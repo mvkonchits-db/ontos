@@ -1504,6 +1504,15 @@ class SettingsManager:
             logger.warning(f"Could not parse assigned_groups JSON for role ID {role_db.id}: {role_db.assigned_groups}")
             assigned_groups = []
 
+        # assigned_users is parallel to assigned_groups; legacy rows return []
+        try:
+            assigned_users = json.loads(getattr(role_db, 'assigned_users', '[]') or '[]')
+            if not isinstance(assigned_users, list):
+                assigned_users = []
+        except (json.JSONDecodeError, TypeError):
+            logger.warning(f"Could not parse assigned_users JSON for role ID {role_db.id}: {getattr(role_db, 'assigned_users', None)}")
+            assigned_users = []
+
         # Feature ID migrations (renamed features)
         FEATURE_ID_MIGRATIONS = {
             'security': 'security-features',
@@ -1580,6 +1589,7 @@ class SettingsManager:
             name=role_db.name,
             description=role_db.description,
             assigned_groups=assigned_groups,
+            assigned_users=assigned_users,
             feature_permissions=feature_permissions,
             home_sections=home_sections,
             approval_privileges=approval_privileges,

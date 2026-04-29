@@ -253,3 +253,64 @@ class TestAppRoleRepository:
         # Assert
         assert count == 5
 
+    # =====================================================================
+    # assigned_users round-trip (issue #196)
+    # =====================================================================
+
+    def test_create_role_with_assigned_users_persists_json(self, repository, db_session):
+        """assigned_users is JSON-serialized at the column level, parallel to assigned_groups."""
+        role_data = AppRoleCreate(
+            name="Role With Users",
+            description="user assignment",
+            feature_permissions={},
+            assigned_users=["alice@example.com", "bob@example.com"],
+        )
+
+        role = repository.create(db_session, obj_in=role_data)
+        db_session.commit()
+
+        assert isinstance(role.assigned_users, str)
+        assert json.loads(role.assigned_users) == ["alice@example.com", "bob@example.com"]
+
+    def test_create_role_assigned_users_defaults_to_empty(self, repository, db_session):
+        """When assigned_users is omitted from input, the column stores '[]'."""
+        role_data = AppRoleCreate(
+            name="Role Without Users",
+            description="no user assignment",
+            feature_permissions={},
+        )
+
+        role = repository.create(db_session, obj_in=role_data)
+        db_session.commit()
+
+        assert role.assigned_users == '[]'
+
+    def test_pydantic_normalizes_assigned_users(self):
+        """Validator strips whitespace, lowercases, drops empties, dedupes (preserve order)."""
+        role_data = AppRoleCreate(
+            name="Norm Role",
+            feature_permissions={},
+            assigned_users=[
+                " Alice@Example.COM ",
+                "bob@example.com",
+                "",
+                "alice@example.com",  # case-insensitive dupe of #1 after normalization
+                "  ",
+            ],
+        )
+
+        assert role_data.assigned_users == ["alice@example.com", "bob@example.com"]
+
+    def test_update_role_with_assigned_users(self, repository, db_session, sample_role_data):
+        """Update path serializes assigned_users when provided."""
+        role = repository.create(db_session, obj_in=sample_role_data)
+        db_session.commit()
+
+        update_payload = {"assigned_users": ["carol@example.com"]}
+        updated = repository.update(db_session, db_obj=role, obj_in=update_payload)
+        db_session.commit()
+
+        assert json.loads(updated.assigned_users) == ["carol@example.com"]
+        # assigned_groups untouched
+        assert json.loads(updated.assigned_groups) == ["test-group"]
+
